@@ -167,7 +167,7 @@ def load_games(db_name: str, player_names_file: Optional[str], without_clubs: bo
             players.append(player_names[player_id])
             places.append(place)
             scores.append(score)
-        if -99.99 <= min(scores) and max(scores) <= 99.99:  # can be +42000 or +42.0
+        if -999.99 <= min(scores) or max(scores) <= 999.99:  # can be +42000 or +42.0
             for i in range(len(scores)):
                 scores[i] *= 1000.0
         games.append(Game(session_id=session_id,
