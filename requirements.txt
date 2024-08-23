@@ -1,2 +1,4 @@
 openskill
+psycopg2
+sqlalchemy
 trueskill
