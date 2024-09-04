@@ -31,6 +31,8 @@ def load_games(db_name: str, player_names_file: Optional[str]) -> list[Game]:
         good_event_ids.add(event_id)
 
     session_date_map: dict[int, datetime] = {}
+    session_event_map: dict[int, int] = {}
+    total_game_count: dict[int, int] = defaultdict(int)
     result = db_session.execute(text("select id, event_id, end_date from session where status = 'finished'"))
     for row in result.all():
         session_id = int(row[0])
@@ -40,6 +42,8 @@ def load_games(db_name: str, player_names_file: Optional[str]) -> list[Game]:
             continue
         assert session_id not in session_date_map
         session_date_map[session_id] = session_date
+        session_event_map[session_id] = event_id
+        total_game_count[event_id] += 1
     print(f"{len(session_date_map)} sessions loaded")
 
     session_results: dict[int, dict[int, tuple[int, float]]] = defaultdict(dict)
@@ -50,6 +54,9 @@ def load_games(db_name: str, player_names_file: Optional[str]) -> list[Game]:
         place = int(row[2])
         score = float(row[3])
         if session_id not in session_date_map:
+            continue
+        event_game_count = total_game_count[session_event_map[session_id]]
+        if event_game_count < 6:  # there are some legal events with 8 players and 3 rounds
             continue
         assert 1 <= place <= 4
         assert isinstance(score, (int, float))
@@ -158,6 +165,7 @@ def load_games(db_name: str, player_names_file: Optional[str]) -> list[Game]:
     games: list[Game] = []
     for session_id in sessions_by_date:
         session_date = session_date_map[session_id]
+        event_id = session_event_map[session_id]
         player_results_map = session_results[session_id]
         players: list[str] = []
         places: list[int] = []
@@ -169,7 +177,8 @@ def load_games(db_name: str, player_names_file: Optional[str]) -> list[Game]:
         if -999.99 <= min(scores) or max(scores) <= 999.99:  # can be +42000 or +42.0
             for i in range(len(scores)):
                 scores[i] *= 1000.0
-        games.append(Game(session_id=session_id,
+        games.append(Game(event_id=event_id,
+                          session_id=session_id,
                           session_date=session_date,
                           players=players,
                           places=places,
