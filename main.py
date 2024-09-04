@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 import sys
+from datetime import datetime
+from datetime import timedelta
 
 from db_load import load_games
 from rating_calc import calc_ratings
@@ -39,10 +41,13 @@ def main():
                                        whitelist_event_ids=[400, 430])
     print(f"{len(new_games)} new games loaded from DB")
 
+    today_date = datetime.now()
     player_stats_map = calc_ratings(games=old_games + new_games, rating_model=rating_model)
     for player, player_stats in sorted(player_stats_map.items(), key=lambda x: -x[1].rating_for_sorting):
         total_games = sum(player_stats.places)
         if total_games < 20:
+            continue
+        if today_date - player_stats.last_game_date > timedelta(days=365 * 2):
             continue
         print(f"Player {player}: rating {player_stats.rating_for_sorting:.3f} in {total_games} games ({player_stats.places})")
 

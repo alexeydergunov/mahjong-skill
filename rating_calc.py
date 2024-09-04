@@ -33,6 +33,8 @@ def calc_ratings(games: list[Game], rating_model: RatingModel) -> dict[str, Play
             if player not in REPLACEMENT_PLAYERS:
                 place = game.places[i]
                 player_stats_map[player].places[place - 1] += 1
+                if player_stats_map[player].last_game_date is None or game.session_date > player_stats_map[player].last_game_date:
+                    player_stats_map[player].last_game_date = game.session_date
     print("All games are processed")
 
     for player_stats in player_stats_map.values():
