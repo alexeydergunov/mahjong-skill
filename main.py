@@ -30,11 +30,13 @@ def main():
     print("Rating model chosen")
 
     old_games: list[Game] = load_games(db_name="mimir_old",
-                                       player_names_file=None)
+                                       player_names_file=None,
+                                       whitelist_event_ids=None)
     print(f"{len(old_games)} old games loaded from DB")
 
     new_games: list[Game] = load_games(db_name="mimir_new_2024_08_05",
-                                       player_names_file="/home/dergunov/test/mimir_2024_08_05/data-1722873805934.csv")
+                                       player_names_file="/home/dergunov/test/mimir_2024_08_05/data-1722873805934.csv",
+                                       whitelist_event_ids=[400, 430])
     print(f"{len(new_games)} new games loaded from DB")
 
     player_stats_map = calc_ratings(games=old_games + new_games, rating_model=rating_model)
