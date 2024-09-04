@@ -14,7 +14,7 @@ from structs import Game
 
 
 # noinspection SqlDialectInspection,SqlNoDataSourceInspection
-def load_games(db_name: str, player_names_file: Optional[str], without_clubs: bool, without_online: bool) -> list[Game]:
+def load_games(db_name: str, player_names_file: Optional[str]) -> list[Game]:
     def creator():
         c = psycopg2.connect(user="mimir", password="mimir", host="localhost", port=5432, dbname=db_name)
         return c
@@ -23,10 +23,9 @@ def load_games(db_name: str, player_names_file: Optional[str], without_clubs: bo
     session_maker = sessionmaker(bind=engine)
     db_session: Session = session_maker()
 
+    # https://github.com/MahjongPantheon/pantheon/blob/7a3c326d7fc8339e4a874371c5c2ae543712b36d/Mimir/src/models/Event.php#L478-L480
     good_event_ids: set[int] = set()
-    auto_seating_statement = "auto_seating = 1" if without_clubs is True else "auto_seating in (0, 1)"
-    online_statement = "is_online = 0" if without_online is True else "is_online in (0, 1)"
-    result = db_session.execute(text(f"select id from event where {auto_seating_statement} and {online_statement}"))
+    result = db_session.execute(text(f"select id from event where (is_online = 0) and (sync_start != 0)"))
     for row in result.all():
         event_id = int(row[0])
         good_event_ids.add(event_id)

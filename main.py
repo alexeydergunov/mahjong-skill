@@ -29,19 +29,12 @@ def main():
             return
     print("Rating model chosen")
 
-    without_clubs = True
-    without_online = True
-
     old_games: list[Game] = load_games(db_name="mimir_old",
-                                       player_names_file=None,
-                                       without_clubs=without_clubs,
-                                       without_online=without_online)
+                                       player_names_file=None)
     print(f"{len(old_games)} old games loaded from DB")
 
     new_games: list[Game] = load_games(db_name="mimir_new_2024_08_05",
-                                       player_names_file="/home/dergunov/test/mimir_2024_08_05/data-1722873805934.csv",
-                                       without_clubs=without_clubs,
-                                       without_online=without_online)
+                                       player_names_file="/home/dergunov/test/mimir_2024_08_05/data-1722873805934.csv")
     print(f"{len(new_games)} new games loaded from DB")
 
     player_stats_map = calc_ratings(games=old_games + new_games, rating_model=rating_model)
