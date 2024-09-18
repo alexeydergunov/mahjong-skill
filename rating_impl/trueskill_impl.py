@@ -20,3 +20,6 @@ class TrueSkillModel(RatingModel):
 
     def get_rating_for_sorting(self, rating: trueskill.Rating) -> float:
         return self.model.expose(rating=rating)
+
+    def get_mean_and_stddev(self, rating: trueskill.Rating) -> tuple[float, float]:
+        return rating.mu, rating.sigma

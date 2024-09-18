@@ -39,5 +39,6 @@ def calc_ratings(games: list[Game], rating_model: RatingModel) -> dict[str, Play
 
     for player_stats in player_stats_map.values():
         player_stats.rating_for_sorting = rating_model.get_rating_for_sorting(rating=player_stats.rating)
+        player_stats.mean_and_stddev = rating_model.get_mean_and_stddev(rating=player_stats.rating)
 
     return player_stats_map

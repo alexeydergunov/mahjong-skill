@@ -15,10 +15,14 @@ class RatingModel:
     def get_rating_for_sorting(self, rating: R) -> float:
         raise NotImplementedError()
 
+    def get_mean_and_stddev(self, rating: R) -> tuple[float, float]:
+        raise NotImplementedError()
+
 
 class PlayerStats:
     def __init__(self, rating: R):
         self.rating_for_sorting: Optional[float] = None
+        self.mean_and_stddev: Optional[tuple[float, float]] = None
         self.rating = rating
         self.places = [0, 0, 0, 0]
         self.last_game_date: Optional[datetime] = None

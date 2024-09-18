@@ -20,3 +20,6 @@ class OpenSkillBTModel(RatingModel):
 
     def get_rating_for_sorting(self, rating: BradleyTerryFullRating) -> float:
         return rating.ordinal()
+
+    def get_mean_and_stddev(self, rating: BradleyTerryFullRating) -> tuple[float, float]:
+        return rating.mu, rating.sigma

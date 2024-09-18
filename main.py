@@ -49,7 +49,9 @@ def main():
             continue
         if today_date - player_stats.last_game_date > timedelta(days=365 * 2):
             continue
-        print(f"Player {player}: rating {player_stats.rating_for_sorting:.3f} in {total_games} games ({player_stats.places})")
+        rating_for_sorting = player_stats.rating_for_sorting
+        mean, stddev = player_stats.mean_and_stddev
+        print(f"Player {player}: confirmed rating {rating_for_sorting:.3f} ({mean:.3f} +/- {stddev:.3f}) in {total_games} games ({player_stats.places})")
 
 
 if __name__ == "__main__":

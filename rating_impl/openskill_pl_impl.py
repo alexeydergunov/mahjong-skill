@@ -20,3 +20,6 @@ class OpenSkillPLModel(RatingModel):
 
     def get_rating_for_sorting(self, rating: PlackettLuceRating) -> float:
         return rating.ordinal()
+
+    def get_mean_and_stddev(self, rating: PlackettLuceRating) -> tuple[float, float]:
+        return rating.mu, rating.sigma
