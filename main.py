@@ -36,8 +36,8 @@ def main():
                                        whitelist_event_ids=None)
     print(f"{len(old_games)} old games loaded from DB")
 
-    new_games: list[Game] = load_games(db_name="mimir_new_2024_08_05",
-                                       player_names_file="/home/dergunov/test/mimir_2024_08_05/data-1722873805934.csv",
+    new_games: list[Game] = load_games(db_name="mimir_new_2024_10_15",
+                                       player_names_file="/home/dergunov/test/mimir_2024_10_15/data-1729000499739.csv",
                                        whitelist_event_ids=[400, 430])
     print(f"{len(new_games)} new games loaded from DB")
 
