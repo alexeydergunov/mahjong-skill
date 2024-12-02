@@ -36,9 +36,9 @@ def main():
                                        whitelist_event_ids=None)
     print(f"{len(old_games)} old games loaded from DB")
 
-    new_games: list[Game] = load_games(db_name="mimir_new_2024_10_15",
-                                       player_names_file="/home/dergunov/test/mimir_2024_10_15/data-1729000499739.csv",
-                                       whitelist_event_ids=[400, 430])
+    new_games: list[Game] = load_games(db_name="mimir_new_2024_12_02",
+                                       player_names_file="db/mimir_new_2024_12_02/data-1733152080940.csv",
+                                       whitelist_event_ids=[400, 430, 467])
     print(f"{len(new_games)} new games loaded from DB")
 
     today_date = datetime.now()
