@@ -23,3 +23,6 @@ class OpenSkillPLModel(RatingModel):
 
     def get_mean_and_stddev(self, rating: PlackettLuceRating) -> tuple[float, float]:
         return rating.mu, rating.sigma
+
+    def adjust(self, rating: PlackettLuceRating, days: int):
+        rating.sigma += 0.001 * days

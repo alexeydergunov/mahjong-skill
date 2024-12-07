@@ -10,8 +10,8 @@ from structs import Game
 
 
 def main():
-    if len(sys.argv) != 2:
-        print("Usage: ./main.py [rating_model_name]")
+    if len(sys.argv) not in {2, 3}:
+        print("Usage: ./main.py <rating_model_name> [date-YYYY-MM-DD]")
         print("rating_model_name can be one of: elo, trueskill, openskill_pl, openskill_bt")
         return
 
@@ -31,6 +31,14 @@ def main():
             return
     print("Rating model chosen")
 
+    if len(sys.argv) == 3:
+        date_to_str = sys.argv[2]
+        print(f"Date to = '{date_to_str}'")
+        date_to = datetime.strptime(date_to_str, "%Y-%m-%d").date()
+    else:
+        date_to = datetime.now().date()
+        print(f"Date to = 'today'")
+
     old_games: list[Game] = load_games(db_name="mimir_old",
                                        player_names_file=None,
                                        whitelist_event_ids=None)
@@ -42,7 +50,7 @@ def main():
     print(f"{len(new_games)} new games loaded from DB")
 
     today_date = datetime.now()
-    player_stats_map = calc_ratings(games=old_games + new_games, rating_model=rating_model)
+    player_stats_map = calc_ratings(games=old_games + new_games, rating_model=rating_model, date_to=date_to)
     for player, player_stats in sorted(player_stats_map.items(), key=lambda x: -x[1].rating_for_sorting):
         total_games = sum(player_stats.places)
         if total_games < 20:

@@ -1,10 +1,15 @@
+from datetime import date
+
 from players_mapping import REPLACEMENT_PLAYERS
 from structs import Game
 from structs import PlayerStats
 from structs import RatingModel
 
 
-def calc_ratings(games: list[Game], rating_model: RatingModel) -> dict[str, PlayerStats]:
+def calc_ratings(games: list[Game], rating_model: RatingModel, date_to: date) -> dict[str, PlayerStats]:
+    games.sort(key=lambda g: g.session_date)  # there were games in old pantheon played later than some games in new pantheon
+    games = [g for g in games if g.session_date.date() <= date_to]
+
     print(f"Start calc ratings for model {rating_model.__class__.__name__}")
     player_stats_map: dict[str, PlayerStats] = {}
     for game in games:
@@ -14,6 +19,13 @@ def calc_ratings(games: list[Game], rating_model: RatingModel) -> dict[str, Play
     print(f"Start ratings initialized for {len(player_stats_map)} players")
 
     for game in games:
+        for player in game.players:
+            if player not in REPLACEMENT_PLAYERS:
+                if player_stats_map[player].last_game_date is not None:
+                    days_since_last_game = (game.session_date.date() - player_stats_map[player].last_game_date.date()).days
+                    assert days_since_last_game >= 0
+                    rating_model.adjust(rating=player_stats_map[player].rating, days=days_since_last_game)
+
         players_with_scores = []
         for i in range(4):
             if game.players[i] not in REPLACEMENT_PLAYERS:
@@ -35,7 +47,14 @@ def calc_ratings(games: list[Game], rating_model: RatingModel) -> dict[str, Play
                 player_stats_map[player].places[place - 1] += 1
                 if player_stats_map[player].last_game_date is None or game.session_date > player_stats_map[player].last_game_date:
                     player_stats_map[player].last_game_date = game.session_date
-    print("All games are processed")
+    print(f"All games till date {date_to} are processed")
+
+    for player_stats in player_stats_map.values():
+        if player_stats.last_game_date is not None:
+            days_since_last_game = (date_to - player_stats.last_game_date.date()).days
+            assert days_since_last_game >= 0
+            rating_model.adjust(rating=player_stats.rating, days=days_since_last_game)
+    print(f"Ratings adjusted to the date {date_to}")
 
     for player_stats in player_stats_map.values():
         player_stats.rating_for_sorting = rating_model.get_rating_for_sorting(rating=player_stats.rating)

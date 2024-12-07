@@ -43,3 +43,6 @@ class EloModel(RatingModel):
 
     def get_mean_and_stddev(self, rating: float) -> tuple[float, float]:
         return rating, 0.0  # not sure how to calculate stddev
+
+    def adjust(self, rating: float, days: int):
+        pass

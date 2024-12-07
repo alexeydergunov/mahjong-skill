@@ -18,6 +18,9 @@ class RatingModel:
     def get_mean_and_stddev(self, rating: R) -> tuple[float, float]:
         raise NotImplementedError()
 
+    def adjust(self, rating: R, days: int):
+        raise NotImplementedError()
+
 
 class PlayerStats:
     def __init__(self, rating: R):
