@@ -27,12 +27,15 @@ class TrueSkillModel(RatingModel):
         return rating.mu, rating.sigma
 
     def adjust(self, rating: trueskill.Rating, days: int):
+        if days <= 90:
+            return
+
         old_pi = rating.pi
         old_tau = rating.tau
         old_sigma = 1.0 / math.sqrt(old_pi)
         old_mu = old_tau / old_pi
 
-        new_sigma = old_sigma + 0.001 * days  # here
+        new_sigma = old_sigma + 0.001 * (days - 90)  # here
         new_pi = 1.0 / (new_sigma ** 2)
         new_tau = new_pi * old_mu
 
