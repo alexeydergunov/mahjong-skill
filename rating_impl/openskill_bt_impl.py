@@ -25,6 +25,6 @@ class OpenSkillBTModel(RatingModel):
         return rating.mu, rating.sigma
 
     def adjust(self, rating: BradleyTerryFullRating, days: int):
-        if days <= 90:
+        if days <= 180:
             return
-        rating.sigma += 0.002 * (days - 90)
+        rating.sigma += 0.001 * (days - 180)
