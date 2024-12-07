@@ -14,7 +14,7 @@ from structs import Game
 
 
 # noinspection SqlDialectInspection,SqlNoDataSourceInspection
-def load_games(db_name: str, player_names_file: Optional[str], whitelist_event_ids: Optional[list[int]]) -> list[Game]:
+def load_games(db_name: str, player_names_file: Optional[str], force_event_ids_to_load: Optional[list[int]]) -> list[Game]:
     def creator():
         c = psycopg2.connect(user="mimir", password="mimir", host="localhost", port=5432, dbname=db_name)
         return c
@@ -30,8 +30,8 @@ def load_games(db_name: str, player_names_file: Optional[str], whitelist_event_i
         event_id = int(row[0])
         good_event_ids.add(event_id)
 
-    if whitelist_event_ids is not None:
-        good_event_ids.update(whitelist_event_ids)
+    if force_event_ids_to_load is not None:
+        good_event_ids.update(force_event_ids_to_load)
 
     session_date_map: dict[int, datetime] = {}
     session_event_map: dict[int, int] = {}
