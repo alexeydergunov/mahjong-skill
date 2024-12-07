@@ -1,5 +1,3 @@
-import math
-
 import trueskill
 
 from structs import RatingModel
@@ -7,7 +5,7 @@ from structs import RatingModel
 
 class TrueSkillModel(RatingModel):
     def __init__(self):
-        self.model = trueskill.TrueSkill(draw_probability=0.001)
+        self.model = trueskill.TrueSkill(draw_probability=0.0)
 
     def new_rating(self) -> trueskill.Rating:
         return self.model.create_rating()
@@ -27,17 +25,18 @@ class TrueSkillModel(RatingModel):
         return rating.mu, rating.sigma
 
     def adjust(self, rating: trueskill.Rating, days: int):
-        if days <= 180:
-            return
-
-        old_pi = rating.pi
-        old_tau = rating.tau
-        old_sigma = 1.0 / math.sqrt(old_pi)
-        old_mu = old_tau / old_pi
-
-        new_sigma = old_sigma + 0.0005 * (days - 180)  # here
-        new_pi = 1.0 / (new_sigma ** 2)
-        new_tau = new_pi * old_mu
-
-        rating.pi = new_pi
-        rating.tau = new_tau
+        return
+        # if days <= 180:
+        #     return
+        #
+        # old_pi = rating.pi
+        # old_tau = rating.tau
+        # old_sigma = 1.0 / (old_pi ** 0.5)
+        # old_mu = old_tau / old_pi
+        #
+        # new_sigma = old_sigma + 0.0005 * (days - 180)  # here
+        # new_pi = 1.0 / (new_sigma ** 2)
+        # new_tau = new_pi * old_mu
+        #
+        # rating.pi = new_pi
+        # rating.tau = new_tau

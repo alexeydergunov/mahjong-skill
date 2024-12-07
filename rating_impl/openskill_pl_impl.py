@@ -25,6 +25,7 @@ class OpenSkillPLModel(RatingModel):
         return rating.mu, rating.sigma
 
     def adjust(self, rating: PlackettLuceRating, days: int):
-        if days <= 180:
-            return
-        rating.sigma += 0.0015 * (days - 180)
+        return
+        # if days <= 180:
+        #     return
+        # rating.sigma += 0.0015 * (days - 180)
