@@ -4,7 +4,7 @@ import json
 from datetime import datetime
 from datetime import timedelta
 
-from db_load import load_games
+import db_load
 from rating_calc import calc_ratings
 from rating_impl import *
 from structs import Game
@@ -59,17 +59,20 @@ def main():
         date_to = datetime.now().date()
         print(f"Date to = 'today'")
 
-    old_games: list[Game] = load_games(db_name="mimir_old",
-                                       player_names_file=None,
-                                       force_event_ids_to_load=None)
+    # db_load.log_tournaments_info(db_name="mimir_old")
+    # db_load.log_tournaments_info(db_name="mimir_new")
+
+    old_games: list[Game] = db_load.load_games(db_name="mimir_old",
+                                               player_names_file=None,
+                                               force_event_ids_to_load=None)
     print(f"{len(old_games)} old games loaded from DB")
     if old_portal_event_ids is not None:
         old_games = [g for g in old_games if g.event_id in old_portal_event_ids]
         print(f"{len(old_games)} old games remaining after filtering by portal event ids")
 
-    new_games: list[Game] = load_games(db_name="mimir_new",
-                                       player_names_file="shared/players-data.csv",
-                                       force_event_ids_to_load=[400, 430, 467])
+    new_games: list[Game] = db_load.load_games(db_name="mimir_new",
+                                               player_names_file="shared/players-data.csv",
+                                               force_event_ids_to_load=[400, 430, 467])
     print(f"{len(new_games)} new games loaded from DB")
     if new_portal_event_ids is not None:
         new_games = [g for g in new_games if g.event_id in new_portal_event_ids]

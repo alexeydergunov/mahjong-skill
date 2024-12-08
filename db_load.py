@@ -13,6 +13,34 @@ from players_mapping import SAME_PLAYERS
 from structs import Game
 
 
+def log_tournaments_info(db_name: str):
+    def creator():
+        c = psycopg2.connect(user="mimir", password="mimir", host="localhost", port=5432, dbname=db_name)
+        return c
+
+    engine = sqlalchemy.create_engine(url="postgresql+psycopg2://", creator=creator)
+    session_maker = sessionmaker(bind=engine)
+    db_session: Session = session_maker()
+
+    result = db_session.execute(text(f"select e.id, e.title, min(s.start_date), max(s.end_date)"
+                                     f" from event e"
+                                     f" join session s on (e.id = s.event_id)"
+                                     f" where (e.is_online = 0) and (e.sync_start != 0)"
+                                     f" group by e.id"
+                                     f" order by e.id"))
+    print(f"Tournaments from db {db_name}:")
+    count = 0
+    for row in result.all():
+        event_id = int(row[0])
+        title = row[1].strip()
+        start_time: datetime = row[2]
+        end_time: datetime = row[3]
+        print(f"{event_id} - from {start_time} to {end_time} - '{title}'")
+        count += 1
+    print(f"Found {count} tournaments in db {db_name}")
+    db_session.close()
+
+
 # noinspection SqlDialectInspection,SqlNoDataSourceInspection
 def load_games(db_name: str, player_names_file: Optional[str], force_event_ids_to_load: Optional[list[int]]) -> list[Game]:
     def creator():
