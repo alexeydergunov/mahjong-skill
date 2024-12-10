@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import argparse
-import json
+import ujson
 from datetime import datetime
 from datetime import timedelta
 
@@ -16,6 +16,7 @@ def main():
                         required=True)
     parser.add_argument("--event-list-file", type=str, required=False)  # 1 line == {"type": "old" or "new", "id": number}
     parser.add_argument("--date-to", type=str, required=False)
+    parser.add_argument("--output-file", type=str, required=False)
     args = parser.parse_args()
 
     rating_model_name = args.model
@@ -40,7 +41,7 @@ def main():
             for line in f:
                 line = line.strip()
                 if line:
-                    event_desc = json.loads(line)
+                    event_desc = ujson.loads(line)
                     if event_desc["type"] == "old":
                         old_portal_event_ids.add(int(event_desc["id"]))
                     elif event_desc["type"] == "new":
@@ -79,7 +80,12 @@ def main():
         print(f"{len(new_games)} new games remaining after filtering by portal event ids")
 
     today_date = datetime.now()
-    player_stats_map = calc_ratings(games=old_games + new_games, rating_model=rating_model, date_to=date_to)
+    all_games = old_games + new_games
+    player_stats_map = calc_ratings(games=all_games, rating_model=rating_model, date_to=date_to)
+
+    output_file = args.output_file if args.output_file is not None else None
+
+    players_trueskill = []
     for player, player_stats in sorted(player_stats_map.items(), key=lambda x: -x[1].rating_for_sorting):
         total_games = sum(player_stats.places)
         if total_games < 20:
@@ -88,8 +94,32 @@ def main():
             continue
         rating_for_sorting = player_stats.rating_for_sorting
         mean, stddev = player_stats.mean_and_stddev
+
+        if output_file is not None:
+            players_trueskill.append({
+                "player": player,
+                "rating": f"{rating_for_sorting:.3f}"
+            })
+
         print(f"Player {player}: confirmed rating {rating_for_sorting:.3f} ({mean:.3f} +/- {stddev:.3f}) in {total_games} games ({player_stats.places})")
 
+    if output_file is not None:
+        export_to_file(all_games, players_trueskill, output_file)
+
+def export_to_file(all_games: list[Game], players_trueskill, filename):
+    unique_games = set()
+    for game in all_games:
+        unique_games.add(game.event_id)
+
+    ts_rating = {
+        'tournament_ids': list(unique_games),
+        'trueskill': players_trueskill
+    }
+
+    with open(filename, "w") as f:
+        f.write(ujson.dumps(ts_rating))
+
+    print(f"Trueskill rating exported to file {filename}")
 
 if __name__ == "__main__":
     main()
