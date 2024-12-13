@@ -21,6 +21,8 @@ def main():
     parser.add_argument("--load-from-portal", action="store_true", default=False, required=False)
     parser.add_argument("--event-list-file", type=str, required=False)
     parser.add_argument("--date-to", type=str, required=False)
+    parser.add_argument("--old-pantheon-games-load-file", type=str, required=False)
+    parser.add_argument("--new-pantheon-games-load-file", type=str, required=False)
     parser.add_argument("--old-pantheon-games-dump-file", type=str, required=False)
     parser.add_argument("--new-pantheon-games-dump-file", type=str, required=False)
     parser.add_argument("--output-file", type=str, required=False)
@@ -77,10 +79,14 @@ def main():
     # db_load.log_tournaments_info(pantheon_type="old")
     # db_load.log_tournaments_info(pantheon_type="new")
 
-    old_games: list[Game] = db_load.load_games(pantheon_type="old",
-                                               player_names_file=None,
-                                               force_event_ids_to_load=None)
-    print(f"{len(old_games)} old games loaded from DB")
+    if args.old_pantheon_games_load_file is not None:
+        old_games: list[Game] = Game.load_list(filename=args.old_pantheon_games_load_file)
+        print(f"{len(old_games)} old games loaded from file {args.old_pantheon_games_load_file}")
+    else:
+        old_games: list[Game] = db_load.load_games(pantheon_type="old",
+                                                   player_names_file=None,
+                                                   force_event_ids_to_load=None)
+        print(f"{len(old_games)} old games loaded from DB")
     if args.old_pantheon_games_dump_file is not None:
         Game.dump_list(games=old_games, filename=args.old_pantheon_games_dump_file)
         print(f"Old games saved to file {args.old_pantheon_games_dump_file}")
@@ -88,10 +94,14 @@ def main():
         old_games = [g for g in old_games if g.event_id in old_portal_event_ids]
         print(f"{len(old_games)} old games remaining after filtering by portal event ids")
 
-    new_games: list[Game] = db_load.load_games(pantheon_type="new",
-                                               player_names_file="shared/players-data.csv",
-                                               force_event_ids_to_load=[400, 430, 467])
-    print(f"{len(new_games)} new games loaded from DB")
+    if args.new_pantheon_games_load_file is not None:
+        new_games: list[Game] = Game.load_list(filename=args.new_pantheon_games_load_file)
+        print(f"{len(new_games)} new games loaded from file {args.new_pantheon_games_load_file}")
+    else:
+        new_games: list[Game] = db_load.load_games(pantheon_type="new",
+                                                   player_names_file="shared/players-data.csv",
+                                                   force_event_ids_to_load=[400, 430, 467])
+        print(f"{len(new_games)} new games loaded from DB")
     if args.new_pantheon_games_dump_file is not None:
         Game.dump_list(games=new_games, filename=args.new_pantheon_games_dump_file)
         print(f"New games saved to file {args.new_pantheon_games_dump_file}")
