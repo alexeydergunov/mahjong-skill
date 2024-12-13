@@ -32,6 +32,6 @@ ENTRYPOINT export TIME=`date +%s` && \
            --output-file /work/out/portal_export_$TIME.json
 
 # Usage:
-# Build: docker build -t [tag]
+# Build: docker build -t [tag] .
 # Run: docker run --network=host --volume [local_path]:/work/out/ [tag]
 # See results in [local_path]

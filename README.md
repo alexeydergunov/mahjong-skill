@@ -16,7 +16,7 @@
 - players_mapping.py - соответствия имен игроков
 - shared/pantheon_old_games.txt - данные из базы старого пантеона
 
-Собрать образ: `docker build -t mahjong-skill`
+Собрать образ: `docker build -t mahjong-skill .`
 
 Запустить: `./remote_run.sh`
 
