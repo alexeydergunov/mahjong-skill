@@ -36,10 +36,11 @@ class PlayerStats:
 
 
 class Game:
-    def __init__(self, event_id: int, session_id: int, session_date: datetime, players: list[str], places: list[int], scores: list[float]):
+    def __init__(self, pantheon_type: str, event_id: int, session_id: int, session_date: datetime, players: list[str], places: list[int], scores: list[float]):
         assert len(players) == 4
         assert len(places) == 4
         assert len(scores) == 4
+        self.pantheon_type = pantheon_type
         self.event_id = event_id
         self.session_id = session_id
         self.session_date = session_date

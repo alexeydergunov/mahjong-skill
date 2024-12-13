@@ -42,7 +42,7 @@ def log_tournaments_info(db_name: str):
 
 
 # noinspection SqlDialectInspection,SqlNoDataSourceInspection
-def load_games(db_name: str, player_names_file: Optional[str], force_event_ids_to_load: Optional[list[int]]) -> list[Game]:
+def load_games(pantheon_type: str, db_name: str, player_names_file: Optional[str], force_event_ids_to_load: Optional[list[int]]) -> list[Game]:
     def creator():
         c = psycopg2.connect(user="mimir", password="mimir", host="localhost", port=5432, dbname=db_name)
         return c
@@ -208,7 +208,8 @@ def load_games(db_name: str, player_names_file: Optional[str], force_event_ids_t
         if -999.99 <= min(scores) or max(scores) <= 999.99:  # can be +42000 or +42.0
             for i in range(len(scores)):
                 scores[i] *= 1000.0
-        games.append(Game(event_id=event_id,
+        games.append(Game(pantheon_type=pantheon_type,
+                          event_id=event_id,
                           session_id=session_id,
                           session_date=session_date,
                           players=players,

@@ -65,7 +65,8 @@ def main():
     # db_load.log_tournaments_info(db_name="mimir_old")
     # db_load.log_tournaments_info(db_name="mimir_new")
 
-    old_games: list[Game] = db_load.load_games(db_name="mimir_old",
+    old_games: list[Game] = db_load.load_games(pantheon_type="old",
+                                               db_name="mimir_old",
                                                player_names_file=None,
                                                force_event_ids_to_load=None)
     print(f"{len(old_games)} old games loaded from DB")
@@ -73,7 +74,8 @@ def main():
         old_games = [g for g in old_games if g.event_id in old_portal_event_ids]
         print(f"{len(old_games)} old games remaining after filtering by portal event ids")
 
-    new_games: list[Game] = db_load.load_games(db_name="mimir_new",
+    new_games: list[Game] = db_load.load_games(pantheon_type="new",
+                                               db_name="mimir_new",
                                                player_names_file="shared/players-data.csv",
                                                force_event_ids_to_load=[400, 430, 467])
     print(f"{len(new_games)} new games loaded from DB")
@@ -85,9 +87,7 @@ def main():
     all_games = old_games + new_games
     player_stats_map = calc_ratings(games=all_games, rating_model=rating_model, date_to=date_to)
 
-    output_file = args.output_file if args.output_file is not None else None
-
-    players_trueskill = []
+    export_results = []
     for player, player_stats in sorted(player_stats_map.items(), key=lambda x: -x[1].rating_for_sorting):
         total_games = sum(player_stats.places)
         if total_games < 20:
@@ -96,32 +96,33 @@ def main():
             continue
         rating_for_sorting = player_stats.rating_for_sorting
         mean, stddev = player_stats.mean_and_stddev
-
-        if output_file is not None:
-            players_trueskill.append({
-                "player": player,
-                "rating": f"{rating_for_sorting:.3f}"
-            })
-
         print(f"Player {player}: confirmed rating {rating_for_sorting:.3f} ({mean:.3f} +/- {stddev:.3f}) in {total_games} games ({player_stats.places})")
+        export_results.append({
+            "player": player,
+            "rating": f"{rating_for_sorting:.3f}",
+            "game_count": str(total_games),
+            "last_game_date": player_stats.last_game_date.strftime("%Y-%m-%d"),
+        })
 
-    if output_file is not None:
-        export_to_file(all_games, players_trueskill, output_file)
+    if args.output_file is not None:
+        export_to_file(all_games, export_results, args.output_file)
 
-def export_to_file(all_games: list[Game], players_trueskill, filename):
-    unique_games = set()
+
+def export_to_file(all_games: list[Game], export_results: list[dict[str, str]], filename: str):
+    unique_events: set[tuple[str, int]] = set()
     for game in all_games:
-        unique_games.add(game.event_id)
+        unique_events.add((game.pantheon_type, game.event_id))
 
     ts_rating = {
-        'tournament_ids': list(unique_games),
-        'trueskill': players_trueskill
+        "tournament_ids": [{"pantheon_type": et, "pantheon_id": eid} for et, eid in sorted(unique_events)],
+        "trueskill": export_results,
     }
 
     with open(filename, "w") as f:
-        f.write(ujson.dumps(ts_rating))
-
+        # noinspection PyTypeChecker
+        ujson.dump(ts_rating, f, ensure_ascii=False, indent=2)
     print(f"Trueskill rating exported to file {filename}")
+
 
 if __name__ == "__main__":
     main()
