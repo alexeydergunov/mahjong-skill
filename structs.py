@@ -1,6 +1,9 @@
 from datetime import datetime
+from typing import Any
 from typing import Optional
 from typing import TypeVar
+
+import ujson
 
 R = TypeVar("R")
 
@@ -36,7 +39,8 @@ class PlayerStats:
 
 
 class Game:
-    def __init__(self, pantheon_type: str, event_id: int, session_id: int, session_date: datetime, players: list[str], places: list[int], scores: list[float]):
+    def __init__(self, pantheon_type: str, event_id: int, session_id: int, session_date: datetime, players: list[str],
+                 places: list[int], scores: list[float]):
         assert len(players) == 4
         assert len(places) == 4
         assert len(scores) == 4
@@ -47,3 +51,42 @@ class Game:
         self.players = players
         self.places = places
         self.scores = scores
+
+    def to_json(self) -> dict[str, Any]:
+        return {
+            "pantheon_type": self.pantheon_type,
+            "event_id": self.event_id,
+            "session_id": self.session_id,
+            "session_date": self.session_date.isoformat(),
+            "players": self.players,
+            "places": self.places,
+            "scores": self.scores,
+        }
+
+    @staticmethod
+    def from_json(data: dict[str, Any]) -> 'Game':
+        return Game(
+            pantheon_type=data["pantheon_type"],
+            event_id=data["event_id"],
+            session_id=data["session_id"],
+            session_date=datetime.fromisoformat(data["session_date"]),
+            players=data["players"],
+            places=data["places"],
+            scores=data["scores"],
+        )
+
+    @staticmethod
+    def dump_list(games: list['Game'], filename: str):
+        with open(filename, "w") as f:
+            for game in games:
+                f.write(ujson.dumps(game.to_json(), ensure_ascii=False))
+                f.write("\n")
+
+    @staticmethod
+    def load_list(filename: str) -> list['Game']:
+        games = []
+        with open(filename, "r") as f:
+            for line in f:
+                data = ujson.loads(line.strip())
+                games.append(Game.from_json(data=data))
+        return games
