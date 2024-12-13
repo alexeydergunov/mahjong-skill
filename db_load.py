@@ -59,20 +59,21 @@ def log_tournaments_info(pantheon_type: str):
 def load_games(pantheon_type: str, player_names_file: Optional[str], force_event_ids_to_load: Optional[list[int]]) -> list[Game]:
     db_connection_provider = DbConnectionProvider(pantheon_type=pantheon_type)
 
+    good_event_ids: set[int] = set()
     with db_connection_provider.get_session() as db_session:
         # https://github.com/MahjongPantheon/pantheon/blob/7a3c326d7fc8339e4a874371c5c2ae543712b36d/Mimir/src/models/Event.php#L478-L480
-        good_event_ids: set[int] = set()
         result = db_session.execute(text(f"select id from event where (is_online = 0) and (sync_start != 0)"))
         for row in result.all():
             event_id = int(row[0])
             good_event_ids.add(event_id)
 
-        if force_event_ids_to_load is not None:
-            good_event_ids.update(force_event_ids_to_load)
+    if force_event_ids_to_load is not None:
+        good_event_ids.update(force_event_ids_to_load)
 
-        session_date_map: dict[int, datetime] = {}
-        session_event_map: dict[int, int] = {}
-        total_game_count: dict[int, int] = defaultdict(int)
+    session_date_map: dict[int, datetime] = {}
+    session_event_map: dict[int, int] = {}
+    total_game_count: dict[int, int] = defaultdict(int)
+    with db_connection_provider.get_session() as db_session:
         result = db_session.execute(text("select id, event_id, end_date from session where status = 'finished'"))
         for row in result.all():
             session_id = int(row[0])
@@ -84,9 +85,10 @@ def load_games(pantheon_type: str, player_names_file: Optional[str], force_event
             session_date_map[session_id] = session_date
             session_event_map[session_id] = event_id
             total_game_count[event_id] += 1
-        print(f"{len(session_date_map)} sessions loaded")
+    print(f"{len(session_date_map)} sessions loaded")
 
-        session_results: dict[int, dict[int, tuple[int, float]]] = defaultdict(dict)
+    session_results: dict[int, dict[int, tuple[int, float]]] = defaultdict(dict)
+    with db_connection_provider.get_session() as db_session:
         result = db_session.execute(text("select session_id, player_id, place, rating_delta from session_results"))
         for row in result.all():
             session_id = int(row[0])
@@ -103,60 +105,62 @@ def load_games(pantheon_type: str, player_names_file: Optional[str], force_event
             assert -1000000 <= score <= 1000000
             assert player_id not in session_results[session_id].values()
             session_results[session_id][player_id] = (place, score)
-        print(f"{len(session_results)} sessions with results loaded")
+    print(f"{len(session_results)} sessions with results loaded")
 
-        broken_session_ids = []
-        for session_id, player_results_map in session_results.items():
-            if len(player_results_map) != 4:
-                print(f"Session {session_id} is broken, players are: {set(player_results_map.keys())}")
-                broken_session_ids.append(session_id)
-        print(f"There are {len(broken_session_ids)} broken sessions")
+    broken_session_ids = []
+    for session_id, player_results_map in session_results.items():
+        if len(player_results_map) != 4:
+            print(f"Session {session_id} is broken, players are: {set(player_results_map.keys())}")
+            broken_session_ids.append(session_id)
+    print(f"There are {len(broken_session_ids)} broken sessions")
 
-        for session_id in broken_session_ids:
-            session_date_map.pop(session_id)
-            session_results.pop(session_id)
+    for session_id in broken_session_ids:
+        session_date_map.pop(session_id)
+        session_results.pop(session_id)
 
-        player_names: dict[int, str] = {}
-        if pantheon_type == "new":
-            if player_names_file is not None:
-                with open(player_names_file) as fd:
-                    line: str
-                    for index, line in enumerate(fd):
-                        if index == 0:
-                            continue
-                        line = line.strip()
-                        if not line:
-                            continue
-                        i = 0
-                        while line[i].isdigit():
-                            i += 1
-                        player_id = int(line[:i])
-                        player_name = line[i + 1:]
-                        if len(player_name) >= 2 and player_name.startswith("\"") and player_name.endswith("\""):
-                            player_name = player_name[1:-1]
-                        player_name = player_name.strip()
-                        assert player_id not in player_names
-                        player_names[player_id] = player_name
-                print(f"{len(player_names)} players loaded from csv file")
-            else:
-                # TODO: new session, Frey DB
+    player_names: dict[int, str] = {}
+    if pantheon_type == "new":
+        if player_names_file is not None:
+            with open(player_names_file) as fd:
+                line: str
+                for index, line in enumerate(fd):
+                    if index == 0:
+                        continue
+                    line = line.strip()
+                    if not line:
+                        continue
+                    i = 0
+                    while line[i].isdigit():
+                        i += 1
+                    player_id = int(line[:i])
+                    player_name = line[i + 1:]
+                    if len(player_name) >= 2 and player_name.startswith("\"") and player_name.endswith("\""):
+                        player_name = player_name[1:-1]
+                    player_name = player_name.strip()
+                    assert player_id not in player_names
+                    player_names[player_id] = player_name
+            print(f"{len(player_names)} players loaded from csv file")
+        else:
+            # TODO: new session, Frey DB
+            with db_connection_provider.get_session() as db_session:
                 result = db_session.execute(text("select id, title from person"))
                 for row in result.all():
                     player_id = int(row[0])
                     player_name = row[1].strip()
                     assert player_id not in player_names
                     player_names[player_id] = player_name
-                print(f"{len(player_names)} players loaded from new DB")
-        elif pantheon_type == "old":
+            print(f"{len(player_names)} players loaded from new DB")
+    elif pantheon_type == "old":
+        with db_connection_provider.get_session() as db_session:
             result = db_session.execute(text("select id, display_name from player"))
             for row in result.all():
                 player_id = int(row[0])
                 player_name = row[1].strip()
                 assert player_id not in player_names
                 player_names[player_id] = player_name
-            print(f"{len(player_names)} players loaded from old DB")
-        else:
-            raise Exception(f"Wrong pantheon_type: {pantheon_type}")
+        print(f"{len(player_names)} players loaded from old DB")
+    else:
+        raise Exception(f"Wrong pantheon_type: {pantheon_type}")
 
     canonical_player_names: dict[str, str] = {}
     for same_players_list in SAME_PLAYERS:
