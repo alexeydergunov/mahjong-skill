@@ -110,8 +110,9 @@ def load_games(pantheon_type: str, player_names_file: Optional[str], force_event
             if session_id not in session_date_map:
                 continue
             event_game_count = total_game_count[session_event_map[session_id]]
-            if event_game_count < 6:  # there are some legal events with 8 players and 3 rounds
-                continue
+            assert event_game_count > 0
+            # if event_game_count < 6:  # there are some legal events with 8 players and 3 rounds
+            #     continue
             assert 1 <= place <= 4
             assert isinstance(score, (int, float))
             assert -1000000 <= score <= 1000000
@@ -190,6 +191,9 @@ def load_games(pantheon_type: str, player_names_file: Optional[str], force_event
         if player_name in REPLACEMENT_PLAYERS:
             replacement_player_ids.add(player_id)
             print(f"Found replacement player: {player_id} with name {player_name}")
+    for player_id in replacement_player_ids:
+        player_names[player_id] += f" (id {player_id})"
+    print("Modified replacement player names so that they become unique")
 
     ids_by_name_map: dict[str, list[int]] = defaultdict(list)
     for player_id, player_name in player_names.items():
