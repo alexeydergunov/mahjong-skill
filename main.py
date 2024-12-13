@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 import argparse
+from typing import Any
+
 import ujson
 from datetime import datetime
 from datetime import timedelta
@@ -38,14 +40,14 @@ def main():
         old_portal_event_ids = set()
         new_portal_event_ids = set()
         with open(args.event_list_file) as f:
-            for line in f:
-                line = line.strip()
-                if line:
-                    event_desc = ujson.loads(line)
-                    if event_desc["type"] == "old":
-                        old_portal_event_ids.add(int(event_desc["id"]))
-                    elif event_desc["type"] == "new":
-                        new_portal_event_ids.add(int(event_desc["id"]))
+            portal_data: list[dict[str, Any]] = ujson.load(f)
+            for portal_event in portal_data:
+                pantheon_type = portal_event["pantheon_type"]
+                pantheon_id = int(portal_event["pantheon_id"])
+                if pantheon_type == "old":
+                    old_portal_event_ids.add(pantheon_id)
+                elif pantheon_type == "new":
+                    new_portal_event_ids.add(pantheon_id)
         print(f"Loaded {len(old_portal_event_ids)} old events and {len(new_portal_event_ids)} new events from file {args.event_list_file}")
     else:
         old_portal_event_ids = None
