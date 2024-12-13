@@ -1,3 +1,4 @@
+import os
 from collections import defaultdict
 from datetime import datetime
 from typing import Optional
@@ -18,16 +19,27 @@ class DbConnectionProvider:
         assert pantheon_type in {"old", "new"}
         self.pantheon_type = pantheon_type
 
-    def get_creator(self):
-        user = "mimir"
-        password = "mimir"
-        host = "localhost"
-        port = 5432
-        db_name = "mimir_new" if self.pantheon_type == "new" else "mimir_old"
+    def get_creator(self, db_type: str):
+        if db_type == "mimir":
+            user = os.getenv("MIMIR_USER") or "mimir"
+            password = os.getenv("MIMIR_PASSWORD") or "mimir"
+            db_name = os.getenv("MIMIR_DB_NAME") or ("mimir_new" if self.pantheon_type == "new" else "mimir_old")
+            host = os.getenv("MIMIR_HOST") or "localhost"
+            port = os.getenv("MIMIR_PORT") or 5432
+            port = int(port)
+        elif db_type == "frey":
+            user = os.getenv("FREY_USER") or "frey"
+            password = os.getenv("FREY_PASSWORD") or "frey"
+            db_name = os.getenv("FREY_DB_NAME") or "frey"
+            host = os.getenv("FREY_HOST") or "localhost"
+            port = os.getenv("FREY_PORT") or 5432
+            port = int(port)
+        else:
+            raise Exception(f"Wrong db_type {db_type}")
         return psycopg2.connect(user=user, password=password, host=host, port=port, dbname=db_name)
 
-    def get_session(self) -> Session:
-        engine = sqlalchemy.create_engine(url="postgresql+psycopg2://", creator=self.get_creator)
+    def get_session(self, db_type: str) -> Session:
+        engine = sqlalchemy.create_engine(url="postgresql+psycopg2://", creator=lambda: self.get_creator(db_type=db_type))
         session_maker = sessionmaker(bind=engine)
         db_session: Session = session_maker()
         return db_session
@@ -36,7 +48,7 @@ class DbConnectionProvider:
 def log_tournaments_info(pantheon_type: str):
     db_connection_provider = DbConnectionProvider(pantheon_type=pantheon_type)
 
-    with db_connection_provider.get_session() as db_session:
+    with db_connection_provider.get_session(db_type="mimir") as db_session:
         result = db_session.execute(text(f"select e.id, e.title, min(s.start_date), max(s.end_date)"
                                          f" from event e"
                                          f" join session s on (e.id = s.event_id)"
@@ -60,7 +72,7 @@ def load_games(pantheon_type: str, player_names_file: Optional[str], force_event
     db_connection_provider = DbConnectionProvider(pantheon_type=pantheon_type)
 
     good_event_ids: set[int] = set()
-    with db_connection_provider.get_session() as db_session:
+    with db_connection_provider.get_session(db_type="mimir") as db_session:
         # https://github.com/MahjongPantheon/pantheon/blob/7a3c326d7fc8339e4a874371c5c2ae543712b36d/Mimir/src/models/Event.php#L478-L480
         result = db_session.execute(text(f"select id from event where (is_online = 0) and (sync_start != 0)"))
         for row in result.all():
@@ -73,7 +85,7 @@ def load_games(pantheon_type: str, player_names_file: Optional[str], force_event
     session_date_map: dict[int, datetime] = {}
     session_event_map: dict[int, int] = {}
     total_game_count: dict[int, int] = defaultdict(int)
-    with db_connection_provider.get_session() as db_session:
+    with db_connection_provider.get_session(db_type="mimir") as db_session:
         result = db_session.execute(text("select id, event_id, end_date from session where status = 'finished'"))
         for row in result.all():
             session_id = int(row[0])
@@ -88,7 +100,7 @@ def load_games(pantheon_type: str, player_names_file: Optional[str], force_event
     print(f"{len(session_date_map)} sessions loaded")
 
     session_results: dict[int, dict[int, tuple[int, float]]] = defaultdict(dict)
-    with db_connection_provider.get_session() as db_session:
+    with db_connection_provider.get_session(db_type="mimir") as db_session:
         result = db_session.execute(text("select session_id, player_id, place, rating_delta from session_results"))
         for row in result.all():
             session_id = int(row[0])
@@ -141,8 +153,7 @@ def load_games(pantheon_type: str, player_names_file: Optional[str], force_event
                     player_names[player_id] = player_name
             print(f"{len(player_names)} players loaded from csv file")
         else:
-            # TODO: new session, Frey DB
-            with db_connection_provider.get_session() as db_session:
+            with db_connection_provider.get_session(db_type="frey") as db_session:
                 result = db_session.execute(text("select id, title from person"))
                 for row in result.all():
                     player_id = int(row[0])
@@ -151,7 +162,7 @@ def load_games(pantheon_type: str, player_names_file: Optional[str], force_event
                     player_names[player_id] = player_name
             print(f"{len(player_names)} players loaded from new DB")
     elif pantheon_type == "old":
-        with db_connection_provider.get_session() as db_session:
+        with db_connection_provider.get_session(db_type="mimir") as db_session:
             result = db_session.execute(text("select id, display_name from player"))
             for row in result.all():
                 player_id = int(row[0])
