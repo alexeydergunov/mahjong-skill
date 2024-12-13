@@ -72,11 +72,10 @@ def main():
         date_to = datetime.now().date()
         print(f"Date to = 'today'")
 
-    # db_load.log_tournaments_info(db_name="mimir_old")
-    # db_load.log_tournaments_info(db_name="mimir_new")
+    # db_load.log_tournaments_info(pantheon_type="old")
+    # db_load.log_tournaments_info(pantheon_type="new")
 
     old_games: list[Game] = db_load.load_games(pantheon_type="old",
-                                               db_name="mimir_old",
                                                player_names_file=None,
                                                force_event_ids_to_load=None)
     print(f"{len(old_games)} old games loaded from DB")
@@ -85,7 +84,6 @@ def main():
         print(f"{len(old_games)} old games remaining after filtering by portal event ids")
 
     new_games: list[Game] = db_load.load_games(pantheon_type="new",
-                                               db_name="mimir_new",
                                                player_names_file="shared/players-data.csv",
                                                force_event_ids_to_load=[400, 430, 467])
     print(f"{len(new_games)} new games loaded from DB")
