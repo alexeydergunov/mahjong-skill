@@ -11,6 +11,7 @@ from sqlalchemy.orm import sessionmaker
 
 from players_mapping import REPLACEMENT_PLAYERS
 from players_mapping import SAME_PLAYERS
+from rating_calc import is_replacement_player
 from structs import Game
 
 
@@ -188,7 +189,7 @@ def load_games(pantheon_type: str, player_names_file: Optional[str], force_event
 
     replacement_player_ids: set[int] = set()
     for player_id, player_name in player_names.items():
-        if player_name in REPLACEMENT_PLAYERS:
+        if is_replacement_player(player_name=player_name):
             replacement_player_ids.add(player_id)
             print(f"Found replacement player: {player_id} with name {player_name}")
     for player_id in replacement_player_ids:
