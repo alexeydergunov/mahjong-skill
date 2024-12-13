@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 import argparse
 from typing import Any
+from typing import Optional
 
+import requests
 import ujson
 from datetime import datetime
 from datetime import timedelta
@@ -16,7 +18,8 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", type=str, choices=["elo", "trueskill", "openskill_pl", "openskill_bt"],
                         required=True)
-    parser.add_argument("--event-list-file", type=str, required=False)  # 1 line == {"type": "old" or "new", "id": number}
+    parser.add_argument("--load-from-portal", action="store_true", default=False, required=False)
+    parser.add_argument("--event-list-file", type=str, required=False)
     parser.add_argument("--date-to", type=str, required=False)
     parser.add_argument("--output-file", type=str, required=False)
     args = parser.parse_args()
@@ -36,23 +39,30 @@ def main():
             print("Unknown rating model name. Use one of above.")
             return
 
-    if args.event_list_file is not None:
+    portal_data: Optional[list[dict[str, Any]]] = None
+    if args.load_from_portal:
+        portal_data = requests.get("https://mahjong.click/api/v0/tournaments/finished/").json()
+        print("Loaded tournaments data from portal api")
+    elif args.event_list_file is not None:
+        with open(args.event_list_file, "r") as f:
+            portal_data = ujson.load(f)
+        print(f"Loaded tournaments data from file {args.event_list_file}")
+    else:
+        print("Neither of '--load-from-portal', '--event-list-file' options are specified")
+
+    old_portal_event_ids = None
+    new_portal_event_ids = None
+    if portal_data is not None:
         old_portal_event_ids = set()
         new_portal_event_ids = set()
-        with open(args.event_list_file) as f:
-            portal_data: list[dict[str, Any]] = ujson.load(f)
-            for portal_event in portal_data:
-                pantheon_type = portal_event["pantheon_type"]
-                pantheon_id = int(portal_event["pantheon_id"])
-                if pantheon_type == "old":
-                    old_portal_event_ids.add(pantheon_id)
-                elif pantheon_type == "new":
-                    new_portal_event_ids.add(pantheon_id)
-        print(f"Loaded {len(old_portal_event_ids)} old events and {len(new_portal_event_ids)} new events from file {args.event_list_file}")
-    else:
-        old_portal_event_ids = None
-        new_portal_event_ids = None
-        print("No event ids file specified")
+        for portal_event in portal_data:
+            pantheon_type = portal_event["pantheon_type"]
+            pantheon_id = int(portal_event["pantheon_id"])
+            if pantheon_type == "old":
+                old_portal_event_ids.add(pantheon_id)
+            elif pantheon_type == "new":
+                new_portal_event_ids.add(pantheon_id)
+        print(f"Loaded {len(old_portal_event_ids)} old events and {len(new_portal_event_ids)} new events from tournaments data")
 
     if args.date_to is not None:
         date_to_str = args.date_to
