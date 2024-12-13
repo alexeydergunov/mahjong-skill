@@ -13,7 +13,7 @@ docker run \
   -e FREY_DB_NAME=frey \
   -e FREY_HOST=db.pantheon.internal \
   -e FREY_PORT=5432 \
-  --network=host \
+  --network=pantheon_internal_net \
   --volume ./docker-out/:/work/out/ \
   mahjong-skill
 
