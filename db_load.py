@@ -193,6 +193,7 @@ def load_games(pantheon_type: str, player_names_file: Optional[str], force_event
             print(f"Found replacement player: {player_id} with name {player_name}")
     for player_id in replacement_player_ids:
         player_names[player_id] += f" (id {player_id})"
+        REPLACEMENT_PLAYERS.append(player_names[player_id])
     print("Modified replacement player names so that they become unique")
 
     ids_by_name_map: dict[str, list[int]] = defaultdict(list)
