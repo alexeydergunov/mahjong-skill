@@ -132,7 +132,8 @@ def load_games(pantheon_type: str, player_names_file: Optional[str], force_event
 
     player_names: dict[int, str] = {}
     if pantheon_type == "new":
-        if player_names_file is not None:
+        if player_names_file is not None and os.path.exists(player_names_file):
+            print(f"Loading players from csv file {player_names_file}")
             with open(player_names_file) as fd:
                 line: str
                 for index, line in enumerate(fd):
@@ -153,6 +154,7 @@ def load_games(pantheon_type: str, player_names_file: Optional[str], force_event
                     player_names[player_id] = player_name
             print(f"{len(player_names)} players loaded from csv file")
         else:
+            print("Loading players from Frey DB")
             with db_connection_provider.get_session(db_type="frey") as db_session:
                 result = db_session.execute(text("select id, title from person"))
                 for row in result.all():
