@@ -108,29 +108,37 @@ def load_games(pantheon_type: str, db_name: str, player_names_file: Optional[str
         session_results.pop(session_id)
 
     player_names: dict[int, str] = {}
-    if player_names_file is not None:
-        # new pantheon, no sensitive data
-        with open(player_names_file) as fd:
-            line: str
-            for index, line in enumerate(fd):
-                if index == 0:
-                    continue
-                line = line.strip()
-                if not line:
-                    continue
-                i = 0
-                while line[i].isdigit():
-                    i += 1
-                player_id = int(line[:i])
-                player_name = line[i + 1:]
-                if len(player_name) >= 2 and player_name.startswith("\"") and player_name.endswith("\""):
-                    player_name = player_name[1:-1]
-                player_name = player_name.strip()
+    if pantheon_type == "new":
+        if player_names_file is not None:
+            with open(player_names_file) as fd:
+                line: str
+                for index, line in enumerate(fd):
+                    if index == 0:
+                        continue
+                    line = line.strip()
+                    if not line:
+                        continue
+                    i = 0
+                    while line[i].isdigit():
+                        i += 1
+                    player_id = int(line[:i])
+                    player_name = line[i + 1:]
+                    if len(player_name) >= 2 and player_name.startswith("\"") and player_name.endswith("\""):
+                        player_name = player_name[1:-1]
+                    player_name = player_name.strip()
+                    assert player_id not in player_names
+                    player_names[player_id] = player_name
+            print(f"{len(player_names)} players loaded from csv file")
+        else:
+            # TODO: new session, Frey DB
+            result = db_session.execute(text("select id, title from person"))
+            for row in result.all():
+                player_id = int(row[0])
+                player_name = row[1].strip()
                 assert player_id not in player_names
                 player_names[player_id] = player_name
-        print(f"{len(player_names)} players loaded from csv file")
-    else:
-        # old pantheon
+            print(f"{len(player_names)} players loaded from new DB")
+    elif pantheon_type == "old":
         result = db_session.execute(text("select id, display_name from player"))
         for row in result.all():
             player_id = int(row[0])
@@ -138,6 +146,8 @@ def load_games(pantheon_type: str, db_name: str, player_names_file: Optional[str
             assert player_id not in player_names
             player_names[player_id] = player_name
         print(f"{len(player_names)} players loaded from old DB")
+    else:
+        raise Exception(f"Wrong pantheon_type: {pantheon_type}")
 
     db_session.close()
 
