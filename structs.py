@@ -1,9 +1,12 @@
 from datetime import datetime
 from typing import Any
+from typing import NewType
 from typing import Optional
 from typing import TypeVar
 
 import ujson
+
+Player = NewType("Player", str)
 
 R = TypeVar("R")
 
@@ -39,8 +42,8 @@ class PlayerStats:
 
 
 class Game:
-    def __init__(self, pantheon_type: str, event_id: int, session_id: int, session_date: datetime, players: list[str],
-                 places: list[int], scores: list[float]):
+    def __init__(self, pantheon_type: str, event_id: int, session_id: int, session_date: datetime,
+                 players: list[Player], places: list[int], scores: list[float]):
         assert len(players) == 4
         assert len(places) == 4
         assert len(scores) == 4

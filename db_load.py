@@ -13,6 +13,7 @@ from players_mapping import REPLACEMENT_PLAYERS
 from players_mapping import SAME_PLAYERS
 from rating_calc import is_replacement_player
 from structs import Game
+from structs import Player
 
 
 class DbConnectionProvider:
@@ -189,7 +190,7 @@ def load_games(pantheon_type: str, player_names_file: Optional[str], force_event
 
     replacement_player_ids: set[int] = set()
     for player_id, player_name in player_names.items():
-        if is_replacement_player(player_name=player_name):
+        if is_replacement_player(player=player_name):  # TODO
             replacement_player_ids.add(player_id)
             print(f"Found replacement player: {player_id} with name {player_name}")
     for player_id in replacement_player_ids:
@@ -238,11 +239,11 @@ def load_games(pantheon_type: str, player_names_file: Optional[str], force_event
         session_date = session_date_map[session_id]
         event_id = session_event_map[session_id]
         player_results_map = session_results[session_id]
-        players: list[str] = []
+        players: list[Player] = []
         places: list[int] = []
         scores: list[float] = []
         for player_id, (place, score) in player_results_map.items():
-            players.append(player_names[player_id])
+            players.append(Player(player_names[player_id]))
             places.append(place)
             scores.append(score)
         if -999.99 <= min(scores) or max(scores) <= 999.99:  # can be +42000 or +42.0

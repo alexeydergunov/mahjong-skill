@@ -12,6 +12,8 @@ import db_load
 from rating_calc import calc_ratings
 from rating_impl import *
 from structs import Game
+from structs import Player
+from structs import PlayerStats
 
 
 def main():
@@ -111,7 +113,7 @@ def main():
 
     today_date = datetime.now()
     all_games = old_games + new_games
-    player_stats_map = calc_ratings(games=all_games, rating_model=rating_model, date_to=date_to)
+    player_stats_map: dict[Player, PlayerStats] = calc_ratings(games=all_games, rating_model=rating_model, date_to=date_to)
 
     export_results = []
     for player, player_stats in sorted(player_stats_map.items(), key=lambda x: -x[1].rating_for_sorting):
@@ -124,7 +126,7 @@ def main():
         mean, stddev = player_stats.mean_and_stddev
         print(f"Player {player}: confirmed rating {rating_for_sorting:.3f} ({mean:.3f} +/- {stddev:.3f}) in {total_games} games ({player_stats.places})")
         export_results.append({
-            "player": player,
+            "player": str(player),
             "rating": f"{rating_for_sorting:.3f}",
             "game_count": str(total_games),
             "last_game_date": player_stats.last_game_date.strftime("%Y-%m-%d"),
