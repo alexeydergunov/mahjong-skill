@@ -11,26 +11,40 @@ R = TypeVar("R")
 
 
 class Player:
-    def __init__(self, name: str, old_id: Optional[int], new_id: Optional[int]):
+    def __init__(self, name: str, old_ids: list[int], new_ids: list[int]):
         self.name = name
-        self.old_id = old_id
-        self.new_id = new_id
+        self.old_ids = old_ids
+        self.new_ids = new_ids
         self.is_replacement_player: bool = (name in REPLACEMENT_PLAYERS)
+
+    def remember_other_ids(self, ids: list[int]):
+        if len(self.old_ids) > 0:
+            assert len(self.new_ids) == 0
+            assert len(self.old_ids) == 1
+            assert self.old_ids[0] in ids
+            self.old_ids = ids
+        elif len(self.new_ids) > 0:
+            assert len(self.old_ids) == 0
+            assert len(self.new_ids) == 1
+            assert self.new_ids[0] in ids
+            self.new_ids = ids
+        else:
+            raise Exception("Incorrect state, all ids lists are empty")
 
     @staticmethod
     def create_old(name: str, player_id: int) -> 'Player':
-        return Player(name=name, old_id=player_id, new_id=None)
+        return Player(name=name, old_ids=[player_id], new_ids=[])
 
     @staticmethod
     def create_new(name: str, player_id: int) -> 'Player':
-        return Player(name=name, old_id=None, new_id=player_id)
+        return Player(name=name, old_ids=[], new_ids=[player_id])
 
     def to_json(self) -> dict[str, Any]:
         data = {"name": self.name}
-        if self.old_id is not None:
-            data["old_id"] = self.old_id
-        if self.new_id is not None:
-            data["new_id"] = self.new_id
+        if len(self.old_ids) > 0:
+            data["old_ids"] = self.old_ids
+        if len(self.new_ids) > 0:
+            data["new_ids"] = self.new_ids
         if self.is_replacement_player:
             data["is_replacement_player"] = True
         return data
@@ -39,15 +53,25 @@ class Player:
     def from_json(data: dict[str, Any]) -> 'Player':
         player = Player(
             name=data["name"],
-            old_id=data.get("old_id"),
-            new_id=data.get("new_id"),
+            old_ids=data.get("old_ids", []),
+            new_ids=data.get("new_ids", []),
         )
         if data.get("is_replacement_player", False) is True:
             assert player.is_replacement_player
         return player
 
-    def key(self):
-        return self.old_id, self.new_id
+    def get_default_old_id(self) -> Optional[int]:
+        if len(self.old_ids) > 0:
+            return self.old_ids[0]
+        return None
+
+    def get_default_new_id(self) -> Optional[int]:
+        if len(self.new_ids) > 0:
+            return self.new_ids[0]
+        return None
+
+    def key(self) -> tuple[Optional[int], Optional[int]]:
+        return self.get_default_old_id(), self.get_default_new_id()
 
     def __hash__(self) -> int:
         return hash(self.key())

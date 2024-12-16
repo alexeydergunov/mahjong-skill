@@ -136,13 +136,18 @@ def main():
             continue
         rating_for_sorting = player_stats.rating_for_sorting
         mean, stddev = player_stats.mean_and_stddev
-        print(f"Player {player.name} (old id {player.old_id}, new id {player.new_id}): confirmed rating {rating_for_sorting:.3f} ({mean:.3f} +/- {stddev:.3f}) in {total_games} games ({player_stats.places})")
-        export_results.append({
+        print(f"Player {player.name} (old ids {player.old_ids}, new ids {player.new_ids}): confirmed rating {rating_for_sorting:.3f} ({mean:.3f} +/- {stddev:.3f}) in {total_games} games ({player_stats.places})")
+        export_element = {
             "player": player.name,
             "rating": f"{rating_for_sorting:.3f}",
             "game_count": str(total_games),
             "last_game_date": player_stats.last_game_date.strftime("%Y-%m-%d"),
-        })
+        }
+        if len(player.old_ids) > 0:
+            export_element["old_ids"] = str(player.old_ids)
+        if len(player.new_ids) > 0:
+            export_element["new_ids"] = str(player.new_ids)
+        export_results.append(export_element)
 
     if args.output_file is not None:
         export_to_file(
@@ -154,36 +159,36 @@ def main():
 
 
 def merge_old_and_new_player_ids(games: list[Game]):
-    old_ids_by_name: dict[str, int] = {}
-    new_ids_by_name: dict[str, int] = {}
+    old_ids_by_name: dict[str, list[int]] = {}
+    new_ids_by_name: dict[str, list[int]] = {}
     for game in games:
         for player in game.players:
             if not player.is_replacement_player:
-                if player.old_id is not None:
+                if len(player.old_ids) > 0:
                     if player.name in old_ids_by_name:
-                        assert old_ids_by_name[player.name] == player.old_id
+                        assert old_ids_by_name[player.name] == player.old_ids
                     else:
-                        old_ids_by_name[player.name] = player.old_id
-                if player.new_id is not None:
+                        old_ids_by_name[player.name] = player.old_ids
+                if len(player.new_ids) > 0:
                     if player.name in new_ids_by_name:
-                        assert new_ids_by_name[player.name] == player.new_id
+                        assert new_ids_by_name[player.name] == player.new_ids
                     else:
-                        new_ids_by_name[player.name] = player.new_id
+                        new_ids_by_name[player.name] = player.new_ids
     print(f"Found {len(old_ids_by_name)} old names, {len(new_ids_by_name)} new names")
 
     for game in games:
         for player in game.players:
             if not player.is_replacement_player:
-                old_id = old_ids_by_name.get(player.name)
-                new_id = new_ids_by_name.get(player.name)
-                if player.old_id is not None:
-                    assert player.old_id == old_id
+                old_ids: list[int] = old_ids_by_name.get(player.name, [])
+                new_ids: list[int] = new_ids_by_name.get(player.name, [])
+                if len(player.old_ids) > 0:
+                    assert player.old_ids == old_ids
                 else:
-                    player.old_id = old_id
-                if player.new_id is not None:
-                    assert player.new_id == new_id
+                    player.old_ids = old_ids
+                if len(player.new_ids) > 0:
+                    assert player.new_ids == new_ids
                 else:
-                    player.new_id = new_id
+                    player.new_ids = new_ids
     print("Old and new player ids merged")
 
 

@@ -203,6 +203,7 @@ def load_games(pantheon_type: str, player_names_file: Optional[str], force_event
             print(f"There are several ids for player {player_name}: {player_ids}, choose {canonical_id}")
         for player_id in player_ids:
             canonical_player_ids_map[player_id] = canonical_id
+        players_by_id[canonical_id].remember_other_ids(ids=player_ids)
     for player_id in replacement_player_ids:
         canonical_player_ids_map[player_id] = player_id
     assert len(canonical_player_ids_map) == len(players_by_id)
