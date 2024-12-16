@@ -71,6 +71,13 @@ def main():
                 new_portal_event_ids.add(pantheon_id)
         print(f"Loaded {len(old_portal_event_ids)} old events and {len(new_portal_event_ids)} new events from tournaments data")
 
+    # A-League 2018 hack: https://mahjong.click/ru/tournaments/riichi/a-league/
+    if old_portal_event_ids is not None:
+        if 76 in old_portal_event_ids:
+            old_portal_event_ids.add(83)
+            old_portal_event_ids.add(87)
+            old_portal_event_ids.add(92)
+
     if args.date_to is not None:
         date_to_str = args.date_to
         print(f"Date to = '{date_to_str}'")
