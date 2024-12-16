@@ -42,7 +42,7 @@ class Player:
             old_id=data.get("old_id"),
             new_id=data.get("new_id"),
         )
-        if data["is_replacement_player"] is True:
+        if data.get("is_replacement_player", False) is True:
             assert player.is_replacement_player
         return player
 
@@ -106,7 +106,7 @@ class Game:
             "event_id": self.event_id,
             "session_id": self.session_id,
             "session_date": self.session_date.isoformat(),
-            "players": self.players,
+            "players": [p.to_json() for p in self.players],
             "places": self.places,
             "scores": self.scores,
         }
@@ -118,7 +118,7 @@ class Game:
             event_id=data["event_id"],
             session_id=data["session_id"],
             session_date=datetime.fromisoformat(data["session_date"]),
-            players=data["players"],
+            players=[Player.from_json(data=pd) for pd in data["players"]],
             places=data["places"],
             scores=data["scores"],
         )
