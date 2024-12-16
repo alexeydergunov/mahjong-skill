@@ -182,20 +182,20 @@ def merge_old_and_new_player_ids(games: list[Game]):
     print("Old and new player ids merged")
 
 
-def export_to_file(all_games: list[Game], export_results: list[dict[str, str]], filename: str):
+def export_to_file(rating_model_name: str, all_games: list[Game], export_results: list[dict[str, str]], filename: str):
     games_by_event: dict[tuple[str, int], int] = defaultdict(int)
     for game in all_games:
         games_by_event[(game.pantheon_type, game.event_id)] += 1
 
     ts_rating = {
         "tournament_ids": [{"pantheon_type": et, "pantheon_id": eid, "game_count": cnt} for (et, eid), cnt in sorted(games_by_event.items())],
-        "trueskill": export_results,
+        rating_model_name: export_results,
     }
 
     with open(filename, "w") as f:
         # noinspection PyTypeChecker
         ujson.dump(ts_rating, f, ensure_ascii=False, indent=2)
-    print(f"Trueskill rating exported to file {filename}")
+    print(f"Rating by model '{rating_model_name}' exported to file {filename}")
 
 
 if __name__ == "__main__":
