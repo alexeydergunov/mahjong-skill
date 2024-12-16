@@ -123,7 +123,6 @@ def main():
         new_games = [g for g in new_games if g.event_id in new_portal_event_ids]
         print(f"{len(new_games)} new games remaining after filtering by portal event ids")
 
-    today_date = datetime.now()
     all_games = old_games + new_games
     merge_old_and_new_player_ids(games=all_games)
     player_stats_map: dict[Player, PlayerStats] = calc_ratings(games=all_games, rating_model=rating_model, date_to=date_to)
@@ -133,7 +132,7 @@ def main():
         total_games = sum(player_stats.places)
         if total_games < 20:
             continue
-        if today_date - player_stats.last_game_date > timedelta(days=365 * 2):
+        if date_to - player_stats.last_game_date > timedelta(days=365 * 2):
             continue
         rating_for_sorting = player_stats.rating_for_sorting
         mean, stddev = player_stats.mean_and_stddev
