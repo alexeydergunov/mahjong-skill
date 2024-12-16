@@ -1,19 +1,9 @@
 from datetime import date
 
-from players_mapping import REPLACEMENT_PLAYERS
 from structs import Game
 from structs import Player
 from structs import PlayerStats
 from structs import RatingModel
-
-
-def is_replacement_player(player: Player) -> bool:
-    # hack: we add "Replacement player (id NNN) to make sure names are unique
-    # new hack: check that at least one replacement player is a prefix
-    for replacement_player_name in REPLACEMENT_PLAYERS:
-        if str(player).startswith(replacement_player_name):
-            return True
-    return False
 
 
 def calc_ratings(games: list[Game], rating_model: RatingModel, date_to: date) -> dict[Player, PlayerStats]:
@@ -24,13 +14,13 @@ def calc_ratings(games: list[Game], rating_model: RatingModel, date_to: date) ->
     player_stats_map: dict[Player, PlayerStats] = {}
     for game in games:
         for player in game.players:
-            if not is_replacement_player(player=player):
+            if not player.is_replacement_player:
                 player_stats_map[player] = PlayerStats.create(rating_model=rating_model)
     print(f"Start ratings initialized for {len(player_stats_map)} players")
 
     for game in games:
         for player in game.players:
-            if not is_replacement_player(player=player):
+            if not player.is_replacement_player:
                 if player_stats_map[player].last_game_date is not None:
                     days_since_last_game = (game.session_date.date() - player_stats_map[player].last_game_date.date()).days
                     assert days_since_last_game >= 0
@@ -38,9 +28,9 @@ def calc_ratings(games: list[Game], rating_model: RatingModel, date_to: date) ->
 
         players_with_scores = []
         for i in range(4):
-            if not is_replacement_player(player=game.players[i]):
+            if not game.players[i].is_replacement_player:
                 players_with_scores.append((game.players[i], game.scores[i]))
-        players_with_scores.sort(key=lambda ps: (-ps[1], ps[0]))
+        players_with_scores.sort(key=lambda ps: (-ps[1], ps[0].name))
 
         old_ratings = [player_stats_map[ps[0]].rating for ps in players_with_scores]
         scores = [ps[1] for ps in players_with_scores]
@@ -52,7 +42,7 @@ def calc_ratings(games: list[Game], rating_model: RatingModel, date_to: date) ->
 
         for i in range(4):
             player = game.players[i]
-            if not is_replacement_player(player=player):
+            if not player.is_replacement_player:
                 place = game.places[i]
                 player_stats_map[player].places[place - 1] += 1
                 if player_stats_map[player].last_game_date is None or game.session_date > player_stats_map[player].last_game_date:

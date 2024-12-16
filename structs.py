@@ -1,14 +1,59 @@
 from datetime import datetime
 from typing import Any
-from typing import NewType
 from typing import Optional
 from typing import TypeVar
 
 import ujson
 
-Player = NewType("Player", str)
+from players_mapping import REPLACEMENT_PLAYERS
 
 R = TypeVar("R")
+
+
+class Player:
+    def __init__(self, name: str, old_id: Optional[int], new_id: Optional[int]):
+        self.name = name
+        self.old_id = old_id
+        self.new_id = new_id
+        self.is_replacement_player: bool = (name in REPLACEMENT_PLAYERS)
+
+    @staticmethod
+    def create_old(name: str, player_id: int) -> 'Player':
+        return Player(name=name, old_id=player_id, new_id=None)
+
+    @staticmethod
+    def create_new(name: str, player_id: int) -> 'Player':
+        return Player(name=name, old_id=None, new_id=player_id)
+
+    def to_json(self) -> dict[str, Any]:
+        data = {"name": self.name}
+        if self.old_id is not None:
+            data["old_id"] = self.old_id
+        if self.new_id is not None:
+            data["new_id"] = self.new_id
+        if self.is_replacement_player:
+            data["is_replacement_player"] = True
+        return data
+
+    @staticmethod
+    def from_json(data: dict[str, Any]) -> 'Player':
+        player = Player(
+            name=data["name"],
+            old_id=data.get("old_id"),
+            new_id=data.get("new_id"),
+        )
+        if data["is_replacement_player"] is True:
+            assert player.is_replacement_player
+        return player
+
+    def key(self):
+        return self.old_id, self.new_id
+
+    def __hash__(self) -> int:
+        return hash(self.key())
+
+    def __eq__(self, other: 'Player') -> bool:
+        return self.key() == other.key()
 
 
 class RatingModel:

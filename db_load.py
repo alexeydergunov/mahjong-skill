@@ -9,9 +9,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 from sqlalchemy.orm import sessionmaker
 
-from players_mapping import REPLACEMENT_PLAYERS
 from players_mapping import SAME_PLAYERS
-from rating_calc import is_replacement_player
 from structs import Game
 from structs import Player
 
@@ -113,8 +111,6 @@ def load_games(pantheon_type: str, player_names_file: Optional[str], force_event
                 continue
             event_game_count = total_game_count[session_event_map[session_id]]
             assert event_game_count > 0
-            # if event_game_count < 6:  # there are some legal events with 8 players and 3 rounds
-            #     continue
             assert 1 <= place <= 4
             assert isinstance(score, (int, float))
             assert -1000000 <= score <= 1000000
@@ -133,7 +129,7 @@ def load_games(pantheon_type: str, player_names_file: Optional[str], force_event
         session_date_map.pop(session_id)
         session_results.pop(session_id)
 
-    player_names: dict[int, str] = {}
+    players_by_id: dict[int, Player] = {}
     if pantheon_type == "new":
         if player_names_file is not None and os.path.exists(player_names_file):
             print(f"Loading players from csv file {player_names_file}")
@@ -153,9 +149,9 @@ def load_games(pantheon_type: str, player_names_file: Optional[str], force_event
                     if len(player_name) >= 2 and player_name.startswith("\"") and player_name.endswith("\""):
                         player_name = player_name[1:-1]
                     player_name = player_name.strip()
-                    assert player_id not in player_names
-                    player_names[player_id] = player_name
-            print(f"{len(player_names)} players loaded from csv file")
+                    assert player_id not in players_by_id
+                    players_by_id[player_id] = Player.create_new(name=player_name, player_id=player_id)
+            print(f"{len(players_by_id)} players loaded from csv file")
         else:
             print("Loading players from Frey DB")
             with db_connection_provider.get_session(db_type="frey") as db_session:
@@ -163,18 +159,18 @@ def load_games(pantheon_type: str, player_names_file: Optional[str], force_event
                 for row in result.all():
                     player_id = int(row[0])
                     player_name = row[1].strip()
-                    assert player_id not in player_names
-                    player_names[player_id] = player_name
-            print(f"{len(player_names)} players loaded from new DB")
+                    assert player_id not in players_by_id
+                    players_by_id[player_id] = Player.create_new(name=player_name, player_id=player_id)
+            print(f"{len(players_by_id)} players loaded from new DB")
     elif pantheon_type == "old":
         with db_connection_provider.get_session(db_type="mimir") as db_session:
             result = db_session.execute(text("select id, display_name from player"))
             for row in result.all():
                 player_id = int(row[0])
                 player_name = row[1].strip()
-                assert player_id not in player_names
-                player_names[player_id] = player_name
-        print(f"{len(player_names)} players loaded from old DB")
+                assert player_id not in players_by_id
+                players_by_id[player_id] = Player.create_old(name=player_name, player_id=player_id)
+        print(f"{len(players_by_id)} players loaded from old DB")
     else:
         raise Exception(f"Wrong pantheon_type: {pantheon_type}")
 
@@ -184,23 +180,19 @@ def load_games(pantheon_type: str, player_names_file: Optional[str], force_event
         for player_name in same_players_list:
             assert player_name not in canonical_player_names
             canonical_player_names[player_name] = canonical_name
-    for player_id in player_names.keys():
-        if player_names[player_id] in canonical_player_names:
-            player_names[player_id] = canonical_player_names[player_names[player_id]]
-
     replacement_player_ids: set[int] = set()
-    for player_id, player_name in player_names.items():
-        if is_replacement_player(player=player_name):  # TODO
+    for player_id, player in players_by_id.items():
+        if player.is_replacement_player:
             replacement_player_ids.add(player_id)
-            print(f"Found replacement player: {player_id} with name {player_name}")
-    for player_id in replacement_player_ids:
-        player_names[player_id] += f" (id {player_id})"
-        REPLACEMENT_PLAYERS.append(player_names[player_id])
-    print("Modified replacement player names so that they become unique")
+            print(f"Found replacement player: {player_id} with name {player.name}")
+        else:
+            if player.name in canonical_player_names:
+                player.name = canonical_player_names[player.name]
 
     ids_by_name_map: dict[str, list[int]] = defaultdict(list)
-    for player_id, player_name in player_names.items():
-        ids_by_name_map[player_name].append(player_id)
+    for player_id, player in players_by_id.items():
+        if not player.is_replacement_player:
+            ids_by_name_map[player.name].append(player_id)
     print("Replaced same players with a canonical name")
 
     canonical_player_ids_map: dict[int, int] = {}
@@ -211,7 +203,9 @@ def load_games(pantheon_type: str, player_names_file: Optional[str], force_event
             print(f"There are several ids for player {player_name}: {player_ids}, choose {canonical_id}")
         for player_id in player_ids:
             canonical_player_ids_map[player_id] = canonical_id
-    assert len(canonical_player_ids_map) == len(player_names)
+    for player_id in replacement_player_ids:
+        canonical_player_ids_map[player_id] = player_id
+    assert len(canonical_player_ids_map) == len(players_by_id)
     print("Chosen canonical player ids")
 
     for session_id in session_results.keys():
@@ -223,12 +217,12 @@ def load_games(pantheon_type: str, player_names_file: Optional[str], force_event
             new_player_id = canonical_player_ids_map[player_id]
             new_player_results_map[new_player_id] = player_results
         session_results[session_id] = new_player_results_map
-    print("Player ids replaced")
+    print("Player ids replaced in session results")
 
-    player_ids_to_forget = set(player_names.keys()) - set(canonical_player_ids_map.values())
+    player_ids_to_forget = set(players_by_id.keys()) - set(canonical_player_ids_map.values())
     for player_id in player_ids_to_forget:
-        player_names.pop(player_id)
-    print("Duplicate player names deleted")
+        players_by_id.pop(player_id)
+    print("Duplicate players deleted")
 
     sessions_by_date: list[int] = list(session_results.keys())
     sessions_by_date.sort(key=lambda s: session_date_map[s])
@@ -243,7 +237,7 @@ def load_games(pantheon_type: str, player_names_file: Optional[str], force_event
         places: list[int] = []
         scores: list[float] = []
         for player_id, (place, score) in player_results_map.items():
-            players.append(Player(player_names[player_id]))
+            players.append(players_by_id[player_id])
             places.append(place)
             scores.append(score)
         if -999.99 <= min(scores) or max(scores) <= 999.99:  # can be +42000 or +42.0
