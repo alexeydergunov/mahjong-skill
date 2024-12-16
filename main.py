@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import argparse
+from collections import defaultdict
 from typing import Any
 from typing import Optional
 
@@ -172,12 +173,12 @@ def merge_old_and_new_player_ids(games: list[Game]):
 
 
 def export_to_file(all_games: list[Game], export_results: list[dict[str, str]], filename: str):
-    unique_events: set[tuple[str, int]] = set()
+    games_by_event: dict[tuple[str, int], int] = defaultdict(int)
     for game in all_games:
-        unique_events.add((game.pantheon_type, game.event_id))
+        games_by_event[(game.pantheon_type, game.event_id)] += 1
 
     ts_rating = {
-        "tournament_ids": [{"pantheon_type": et, "pantheon_id": eid} for et, eid in sorted(unique_events)],
+        "tournament_ids": [{"pantheon_type": et, "pantheon_id": eid, "game_count": cnt} for (et, eid), cnt in sorted(games_by_event.items())],
         "trueskill": export_results,
     }
 
