@@ -145,7 +145,12 @@ def main():
         })
 
     if args.output_file is not None:
-        export_to_file(all_games, export_results, args.output_file)
+        export_to_file(
+            rating_model_name=rating_model_name,
+            all_games=all_games,
+            export_results=export_results,
+            filename=args.output_file,
+        )
 
 
 def merge_old_and_new_player_ids(games: list[Game]):
