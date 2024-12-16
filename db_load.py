@@ -198,7 +198,7 @@ def load_games(pantheon_type: str, player_names_file: Optional[str], force_event
     canonical_player_ids_map: dict[int, int] = {}
     for player_name, player_ids in ids_by_name_map.items():
         player_ids.sort()
-        canonical_id = player_ids[0]
+        canonical_id = player_ids[-1]  # choose newest
         if len(player_ids) > 1:
             print(f"There are several ids for player {player_name}: {player_ids}, choose {canonical_id}")
         for player_id in player_ids:

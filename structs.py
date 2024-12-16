@@ -62,12 +62,12 @@ class Player:
 
     def get_default_old_id(self) -> Optional[int]:
         if len(self.old_ids) > 0:
-            return self.old_ids[0]
+            return self.old_ids[-1]
         return None
 
     def get_default_new_id(self) -> Optional[int]:
         if len(self.new_ids) > 0:
-            return self.new_ids[0]
+            return self.new_ids[-1]
         return None
 
     def key(self) -> tuple[Optional[int], Optional[int]]:
