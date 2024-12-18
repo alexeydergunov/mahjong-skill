@@ -45,14 +45,18 @@ class DbConnectionProvider:
         return db_session
 
 
-def log_tournaments_info(pantheon_type: str):
+def log_tournaments_info(pantheon_type: str, online: bool):
     db_connection_provider = DbConnectionProvider(pantheon_type=pantheon_type)
 
     with db_connection_provider.get_session(db_type="mimir") as db_session:
+        if online:
+            where_condition = "(e.is_online != 0)"
+        else:
+            where_condition = "(e.is_online = 0) and (e.sync_start != 0)"
         result = db_session.execute(text(f"select e.id, e.title, min(s.start_date), max(s.end_date)"
                                          f" from event e"
                                          f" join session s on (e.id = s.event_id)"
-                                         f" where (e.is_online = 0) and (e.sync_start != 0)"
+                                         f" where {where_condition}"
                                          f" group by e.id"
                                          f" order by e.id"))
         print(f"Tournaments from pantheon type {pantheon_type}:")
@@ -68,13 +72,17 @@ def log_tournaments_info(pantheon_type: str):
 
 
 # noinspection SqlDialectInspection,SqlNoDataSourceInspection
-def load_games(pantheon_type: str, player_names_file: Optional[str], force_event_ids_to_load: Optional[list[int]]) -> list[Game]:
+def load_games(pantheon_type: str, online: bool, player_names_file: Optional[str], force_event_ids_to_load: Optional[list[int]]) -> list[Game]:
     db_connection_provider = DbConnectionProvider(pantheon_type=pantheon_type)
 
     good_event_ids: set[int] = set()
     with db_connection_provider.get_session(db_type="mimir") as db_session:
         # https://github.com/MahjongPantheon/pantheon/blob/7a3c326d7fc8339e4a874371c5c2ae543712b36d/Mimir/src/models/Event.php#L478-L480
-        result = db_session.execute(text(f"select id from event where (is_online = 0) and (sync_start != 0)"))
+        if online:
+            where_condition = "(is_online != 0)"
+        else:
+            where_condition = "(is_online = 0) and (sync_start != 0)"
+        result = db_session.execute(text(f"select id from event where {where_condition}"))
         for row in result.all():
             event_id = int(row[0])
             good_event_ids.add(event_id)

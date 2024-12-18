@@ -24,6 +24,7 @@ def main():
     parser.add_argument("--load-from-portal", action="store_true", default=False, required=False)
     parser.add_argument("--event-list-file", type=str, required=False)
     parser.add_argument("--date-to", type=str, required=False)
+    parser.add_argument("--online", action="store_true", default=False, required=False)
     parser.add_argument("--old-pantheon-games-load-file", type=str, required=False)
     parser.add_argument("--new-pantheon-games-load-file", type=str, required=False)
     parser.add_argument("--old-pantheon-games-dump-file", type=str, required=False)
@@ -90,14 +91,18 @@ def main():
         date_to = datetime.now().date()
         print(f"Date to = 'today'")
 
-    # db_load.log_tournaments_info(pantheon_type="old")
-    # db_load.log_tournaments_info(pantheon_type="new")
+    online: bool = args.online
+    print(f"Online: {online}")
+
+    # db_load.log_tournaments_info(pantheon_type="old", online=online)
+    # db_load.log_tournaments_info(pantheon_type="new", online=online)
 
     if args.old_pantheon_games_load_file is not None:
         old_games: list[Game] = Game.load_list(filename=args.old_pantheon_games_load_file)
         print(f"{len(old_games)} old games loaded from file {args.old_pantheon_games_load_file}")
     else:
         old_games: list[Game] = db_load.load_games(pantheon_type="old",
+                                                   online=online,
                                                    player_names_file=None,
                                                    force_event_ids_to_load=None)
         print(f"{len(old_games)} old games loaded from DB")
@@ -113,6 +118,7 @@ def main():
         print(f"{len(new_games)} new games loaded from file {args.new_pantheon_games_load_file}")
     else:
         new_games: list[Game] = db_load.load_games(pantheon_type="new",
+                                                   online=online,
                                                    player_names_file="shared/players-data.csv",
                                                    force_event_ids_to_load=[400, 430, 467])
         print(f"{len(new_games)} new games loaded from DB")
