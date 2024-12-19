@@ -72,17 +72,6 @@ def main():
                 new_portal_event_ids.add(pantheon_id)
         print(f"Loaded {len(old_portal_event_ids)} old events and {len(new_portal_event_ids)} new events from tournaments data")
 
-    if old_portal_event_ids is not None:
-        # A-League 2018: https://mahjong.click/ru/tournaments/riichi/a-league/
-        if 76 in old_portal_event_ids:
-            old_portal_event_ids.add(83)
-            old_portal_event_ids.add(87)
-            old_portal_event_ids.add(92)
-        # Agari season event 2018: https://mahjong.click/ru/tournaments/riichi/agari-tournament-2018-summer/
-        if 111 in old_portal_event_ids:
-            old_portal_event_ids.add(95)
-            old_portal_event_ids.add(101)
-
     if args.date_to is not None:
         date_to_str = args.date_to
         print(f"Date to = '{date_to_str}'")
