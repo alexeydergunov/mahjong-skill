@@ -15,12 +15,11 @@ COPY rating_impl/*.py /work/rating_impl/
 COPY shared/pantheon_old_games.txt /work/shared/
 
 
-ENTRYPOINT export TIME=`date +%s` && \
-           ./main.py \
+ENTRYPOINT ./main.py \
            --model trueskill \
            --load-from-portal \
            --old-pantheon-games-load-file shared/pantheon_old_games.txt \
-           --output-file /work/out/portal_export_$TIME.json
+           --output-file /work/out/portal_export.json
 
 # Usage:
 # Build: docker build -t [tag] .
