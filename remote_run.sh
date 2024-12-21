@@ -2,6 +2,9 @@
 
 set -e
 
+# Don't forget to build docker image:
+# docker build -t mahjong-skill .
+
 docker run \
   -e MIMIR_USER=mimir \
   -e MIMIR_PASSWORD=pgpass \
