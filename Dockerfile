@@ -11,7 +11,7 @@ COPY rating_impl/*.py /work/rating_impl/
 ENTRYPOINT ./main.py \
            --model trueskill \
            --load-from-portal \
-           --old-pantheon-games-load-file shared/pantheon_old_games.txt \
+           --old-pantheon-games-load-file /work/shared/pantheon_old_games.txt \
            --output-file /work/out/portal_export.json
 
 # Usage:
