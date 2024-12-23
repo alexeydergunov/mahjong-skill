@@ -18,7 +18,18 @@ ENTRYPOINT ./main.py \
            --online \
            --load-from-portal \
            --old-pantheon-games-load-file /work/shared/online_old_games.txt \
-           --output-file /work/out/portal_export_trueskill_online.json > /work/out/log_trueskill_online.txt
+           --output-file /work/out/portal_export_trueskill_online.json > /work/out/log_trueskill_online.txt && \
+           ./main.py \
+           --model openskill_pl \
+           --load-from-portal \
+           --old-pantheon-games-load-file /work/shared/pantheon_old_games.txt \
+           --output-file /work/out/portal_export_openskill_pl.json > /work/out/log_openskill_pl.txt && \
+           ./main.py \
+           --model openskill_pl \
+           --online \
+           --load-from-portal \
+           --old-pantheon-games-load-file /work/shared/online_old_games.txt \
+           --output-file /work/out/portal_export_openskill_pl_online.json > /work/out/log_openskill_pl_online.txt
 
 # Usage:
 # Build: docker build -t [tag] .
