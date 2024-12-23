@@ -12,7 +12,13 @@ ENTRYPOINT ./main.py \
            --model trueskill \
            --load-from-portal \
            --old-pantheon-games-load-file /work/shared/pantheon_old_games.txt \
-           --output-file /work/out/portal_export_trueskill.json
+           --output-file /work/out/portal_export_trueskill.json > /work/out/log_trueskill.txt && \
+           ./main.py \
+           --model trueskill \
+           --online \
+           --load-from-portal \
+           --old-pantheon-games-load-file /work/shared/online_old_games.txt \
+           --output-file /work/out/portal_export_trueskill_online.json > /work/out/log_trueskill_online.txt
 
 # Usage:
 # Build: docker build -t [tag] .
