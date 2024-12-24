@@ -157,6 +157,8 @@ def load_games(pantheon_type: str, online: bool, player_names_file: Optional[str
                     if len(player_name) >= 2 and player_name.startswith("\"") and player_name.endswith("\""):
                         player_name = player_name[1:-1]
                     player_name = player_name.strip()
+                    while "\"\"" in player_name:
+                        player_name = player_name.replace("\"\"", "\"")
                     assert player_id not in players_by_id
                     players_by_id[player_id] = Player.create_new(name=player_name, player_id=player_id)
             print(f"{len(players_by_id)} players loaded from csv file")
