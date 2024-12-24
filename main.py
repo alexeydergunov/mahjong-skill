@@ -124,18 +124,22 @@ def main():
 
     export_results = []
     for player, player_stats in sorted(player_stats_map.items(), key=lambda x: -x[1].rating_for_sorting):
-        total_games = sum(player_stats.places)
+        places = player_stats.places
+        total_games = sum(places)
         if total_games < 10:
             continue
         # if date_to - player_stats.last_game_date.date() > timedelta(days=365 * 2):
         #     continue
         rating_for_sorting = player_stats.rating_for_sorting
         mean, stddev = player_stats.mean_and_stddev
-        print(f"Player {player.name} (old ids {player.old_ids}, new ids {player.new_ids}): confirmed rating {rating_for_sorting:.3f} ({mean:.3f} +/- {stddev:.3f}) in {total_games} games ({player_stats.places})")
+        print(f"Player {player.name} (old ids {player.old_ids}, new ids {player.new_ids}): confirmed rating {rating_for_sorting:.3f} ({mean:.3f} +/- {stddev:.3f}) in {total_games} games ({places})")
         export_element = {
             "player": player.name,
             "rating": round(rating_for_sorting, 3),
+            "mean": round(mean, 3),
+            "stddev": round(stddev, 3),
             "game_count": total_games,
+            "places": str(places),
             "last_game_date": player_stats.last_game_date.strftime("%Y-%m-%d"),
         }
         if len(player.old_ids) > 0:
