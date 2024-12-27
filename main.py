@@ -141,6 +141,7 @@ def main():
             "game_count": total_games,
             "places": str(places),
             "last_game_date": player_stats.last_game_date.strftime("%Y-%m-%d"),
+            "events": [t + "_" + str(i) for (t, i) in sorted(player_stats.events_set, key=lambda x: (x[0][2], x[1]))],  # 'ol[d]' < 'ne[w]'
         }
         if len(player.old_ids) > 0:
             export_element["old_ids"] = str(player.old_ids)

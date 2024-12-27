@@ -104,6 +104,7 @@ class PlayerStats:
         self.rating = rating
         self.places = [0, 0, 0, 0]
         self.last_game_date: Optional[datetime] = None
+        self.events_set: set[tuple[str, int]] = set()
 
     @staticmethod
     def create(rating_model: RatingModel) -> 'PlayerStats':
