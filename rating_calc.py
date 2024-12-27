@@ -22,7 +22,7 @@ def calc_ratings(games: list[Game], rating_model: RatingModel, date_to: date) ->
     for game in games:
         for player in game.players:
             if not player.is_replacement_player:
-                player_stats_map[player].events_set.add((game.pantheon_type, game.event_id))
+                player_stats_map[player].event_game_counts[(game.pantheon_type, game.event_id)] += 1
                 if player_stats_map[player].last_game_date is not None:
                     days_since_last_game = (game.session_date.date() - player_stats_map[player].last_game_date.date()).days
                     assert days_since_last_game >= 0

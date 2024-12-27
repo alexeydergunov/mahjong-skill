@@ -133,6 +133,7 @@ def main():
         rating_for_sorting = player_stats.rating_for_sorting
         mean, stddev = player_stats.mean_and_stddev
         print(f"Player {player.name} (old ids {player.old_ids}, new ids {player.new_ids}): confirmed rating {rating_for_sorting:.3f} ({mean:.3f} +/- {stddev:.3f}) in {total_games} games ({places})")
+        sorted_events: list[tuple[str, int]] = sorted(player_stats.event_game_counts.keys(), key=lambda x: (x[0][2], x[1]))  # 'ol[d]' < 'ne[w]'
         export_element = {
             "player": player.name,
             "rating": round(rating_for_sorting, 3),
@@ -141,7 +142,7 @@ def main():
             "game_count": total_games,
             "places": str(places),
             "last_game_date": player_stats.last_game_date.strftime("%Y-%m-%d"),
-            "events": [t + "_" + str(i) for (t, i) in sorted(player_stats.events_set, key=lambda x: (x[0][2], x[1]))],  # 'ol[d]' < 'ne[w]'
+            "event_game_counts": [t + "_" + str(i) + " -> " + str(player_stats.event_game_counts[(t, i)]) for (t, i) in sorted_events],
         }
         if len(player.old_ids) > 0:
             export_element["old_ids"] = str(player.old_ids)

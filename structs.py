@@ -1,3 +1,4 @@
+from collections import defaultdict
 from datetime import datetime
 from typing import Any
 from typing import Optional
@@ -104,7 +105,7 @@ class PlayerStats:
         self.rating = rating
         self.places = [0, 0, 0, 0]
         self.last_game_date: Optional[datetime] = None
-        self.events_set: set[tuple[str, int]] = set()
+        self.event_game_counts: dict[tuple[str, int], int] = defaultdict(int)
 
     @staticmethod
     def create(rating_model: RatingModel) -> 'PlayerStats':
