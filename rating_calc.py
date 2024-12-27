@@ -15,7 +15,8 @@ def calc_ratings(games: list[Game], rating_model: RatingModel, date_to: date) ->
     for game in games:
         for player in game.players:
             if not player.is_replacement_player:
-                player_stats_map[player] = PlayerStats.create(rating_model=rating_model)
+                if player not in player_stats_map:
+                    player_stats_map[player] = PlayerStats.create(rating_model=rating_model)
     print(f"Start ratings initialized for {len(player_stats_map)} players")
 
     for game in games:
