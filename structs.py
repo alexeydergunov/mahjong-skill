@@ -46,8 +46,6 @@ class Player:
             data["old_ids"] = self.old_ids
         if len(self.new_ids) > 0:
             data["new_ids"] = self.new_ids
-        if self.is_replacement_player:
-            data["is_replacement_player"] = True
         return data
 
     @staticmethod
@@ -57,8 +55,6 @@ class Player:
             old_ids=data.get("old_ids", []),
             new_ids=data.get("new_ids", []),
         )
-        if data.get("is_replacement_player", False) is True:
-            assert player.is_replacement_player
         return player
 
     def get_default_old_id(self) -> Optional[int]:
