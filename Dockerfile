@@ -5,36 +5,43 @@ WORKDIR /work/
 COPY requirements.txt /work/
 RUN pip install -r requirements.txt
 
+# jq to output Russian letters
+RUN apk --no-cache add curl jq
+
 COPY *.py /work/
 COPY rating_impl/*.py /work/rating_impl/
 
 ENTRYPOINT echo "Source files hashes:" && md5sum /work/*.py && md5sum /work/rating_impl/*.py && \
+           echo "Loading portal tournaments..." && \
+           curl -X GET 'https://mahjong.click/api/v0/tournaments/finished/' | jq > /work/out/portal_tournaments.json && \
+           ls -la /work/out/portal_tournaments.json && \
            echo "Calculating Trueskill..." && \
            ./main.py \
            --model trueskill \
-           --load-from-portal \
+           --event-list-file /work/out/portal_tournaments.json \
            --old-pantheon-games-load-file /work/shared/pantheon_old_games.txt \
            --output-file /work/out/portal_export_trueskill.json > /work/out/log_trueskill.txt && \
            echo "Calculating online Trueskill..." && \
            ./main.py \
            --model trueskill \
            --online \
-           --load-from-portal \
+           --event-list-file /work/out/portal_tournaments.json \
            --old-pantheon-games-load-file /work/shared/online_old_games.txt \
            --output-file /work/out/portal_export_trueskill_online.json > /work/out/log_trueskill_online.txt && \
            echo "Calculating Openskill (PL model)..." && \
            ./main.py \
            --model openskill_pl \
-           --load-from-portal \
+           --event-list-file /work/out/portal_tournaments.json \
            --old-pantheon-games-load-file /work/shared/pantheon_old_games.txt \
            --output-file /work/out/portal_export_openskill_pl.json > /work/out/log_openskill_pl.txt && \
            echo "Calculating online Openskill (PL model)..." && \
            ./main.py \
            --model openskill_pl \
            --online \
-           --load-from-portal \
+           --event-list-file /work/out/portal_tournaments.json \
            --old-pantheon-games-load-file /work/shared/online_old_games.txt \
            --output-file /work/out/portal_export_openskill_pl_online.json > /work/out/log_openskill_pl_online.txt && \
+           ls -la /work/out/* && \
            echo "Done"
 
 # Usage:
