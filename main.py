@@ -74,6 +74,11 @@ def main():
                 new_portal_event_ids.add(pantheon_id)
         print(f"Loaded {len(old_portal_event_ids)} old events and {len(new_portal_event_ids)} new events from tournaments data")
 
+    if old_portal_event_ids is not None:
+        if 310 in old_portal_event_ids:
+            old_portal_event_ids.remove(310)
+        old_portal_event_ids.add(335)
+
     if args.date_to is not None:
         date_to_str = args.date_to
         print(f"Date to = '{date_to_str}'")
@@ -95,7 +100,7 @@ def main():
         old_games: list[Game] = db_load.load_games(pantheon_type="old",
                                                    online=online,
                                                    player_names_file=None,
-                                                   force_event_ids_to_load=None)
+                                                   force_event_ids_to_load=None if online else [142, 236, 335])
         print(f"{len(old_games)} old games loaded from DB")
     if args.old_pantheon_games_dump_file is not None:
         Game.dump_list(games=old_games, filename=args.old_pantheon_games_dump_file)
@@ -112,7 +117,7 @@ def main():
         new_games: list[Game] = db_load.load_games(pantheon_type="new",
                                                    online=online,
                                                    player_names_file="shared/players-data.csv",
-                                                   force_event_ids_to_load=None if online else [400, 430, 467])
+                                                   force_event_ids_to_load=None if online else [215, 400, 430, 467])
         print(f"{len(new_games)} new games loaded from DB")
     if args.new_pantheon_games_dump_file is not None:
         Game.dump_list(games=new_games, filename=args.new_pantheon_games_dump_file)
