@@ -7,9 +7,11 @@ from typing import Optional
 import requests
 import ujson
 from datetime import datetime
-from datetime import timedelta
+# from datetime import timedelta
 
 import db_load
+from players_work import merge_old_and_new_player_ids
+from players_work import replace_names
 from rating_calc import calc_ratings
 from rating_impl import *
 from structs import Game
@@ -98,6 +100,7 @@ def main():
     if args.old_pantheon_games_dump_file is not None:
         Game.dump_list(games=old_games, filename=args.old_pantheon_games_dump_file)
         print(f"Old games saved to file {args.old_pantheon_games_dump_file}")
+    replace_names(games=old_games, pantheon_type="old")
     if old_portal_event_ids is not None:
         old_games = [g for g in old_games if g.event_id in old_portal_event_ids]
         print(f"{len(old_games)} old games remaining after filtering by portal event ids")
@@ -114,6 +117,7 @@ def main():
     if args.new_pantheon_games_dump_file is not None:
         Game.dump_list(games=new_games, filename=args.new_pantheon_games_dump_file)
         print(f"New games saved to file {args.new_pantheon_games_dump_file}")
+    replace_names(games=new_games, pantheon_type="new")
     if new_portal_event_ids is not None:
         new_games = [g for g in new_games if g.event_id in new_portal_event_ids]
         print(f"{len(new_games)} new games remaining after filtering by portal event ids")
@@ -157,40 +161,6 @@ def main():
             export_results=export_results,
             filename=args.output_file,
         )
-
-
-def merge_old_and_new_player_ids(games: list[Game]):
-    old_ids_by_name: dict[str, list[int]] = {}
-    new_ids_by_name: dict[str, list[int]] = {}
-    for game in games:
-        for player in game.players:
-            if not player.is_replacement_player:
-                if len(player.old_ids) > 0:
-                    if player.name in old_ids_by_name:
-                        assert old_ids_by_name[player.name] == player.old_ids
-                    else:
-                        old_ids_by_name[player.name] = player.old_ids
-                if len(player.new_ids) > 0:
-                    if player.name in new_ids_by_name:
-                        assert new_ids_by_name[player.name] == player.new_ids
-                    else:
-                        new_ids_by_name[player.name] = player.new_ids
-    print(f"Found {len(old_ids_by_name)} old names, {len(new_ids_by_name)} new names")
-
-    for game in games:
-        for player in game.players:
-            if not player.is_replacement_player:
-                old_ids: list[int] = old_ids_by_name.get(player.name, [])
-                new_ids: list[int] = new_ids_by_name.get(player.name, [])
-                if len(player.old_ids) > 0:
-                    assert player.old_ids == old_ids
-                else:
-                    player.old_ids = old_ids
-                if len(player.new_ids) > 0:
-                    assert player.new_ids == new_ids
-                else:
-                    player.new_ids = new_ids
-    print("Old and new player ids merged")
 
 
 def export_to_file(rating_model_name: str, all_games: list[Game], export_results: list[dict[str, str]], filename: str):

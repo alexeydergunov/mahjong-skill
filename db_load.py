@@ -9,7 +9,6 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 from sqlalchemy.orm import sessionmaker
 
-from players_mapping import SAME_PLAYERS
 from structs import Game
 from structs import Player
 
@@ -183,57 +182,6 @@ def load_games(pantheon_type: str, online: bool, player_names_file: Optional[str
         print(f"{len(players_by_id)} players loaded from old DB")
     else:
         raise Exception(f"Wrong pantheon_type: {pantheon_type}")
-
-    canonical_player_names: dict[str, str] = {}
-    for same_players_list in SAME_PLAYERS:
-        canonical_name = same_players_list[0]
-        for player_name in same_players_list:
-            assert player_name not in canonical_player_names
-            canonical_player_names[player_name] = canonical_name
-    replacement_player_ids: set[int] = set()
-    for player_id, player in players_by_id.items():
-        if player.is_replacement_player:
-            replacement_player_ids.add(player_id)
-            print(f"Found replacement player: {player_id} with name {player.name}")
-        else:
-            if player.name in canonical_player_names:
-                player.name = canonical_player_names[player.name]
-
-    ids_by_name_map: dict[str, list[int]] = defaultdict(list)
-    for player_id, player in players_by_id.items():
-        if not player.is_replacement_player:
-            ids_by_name_map[player.name].append(player_id)
-    print("Replaced same players with a canonical name")
-
-    canonical_player_ids_map: dict[int, int] = {}
-    for player_name, player_ids in ids_by_name_map.items():
-        player_ids.sort()
-        canonical_id = player_ids[-1]  # choose newest
-        if len(player_ids) > 1:
-            print(f"There are several ids for player {player_name}: {player_ids}, choose {canonical_id}")
-        for player_id in player_ids:
-            canonical_player_ids_map[player_id] = canonical_id
-        players_by_id[canonical_id].remember_other_ids(ids=player_ids)
-    for player_id in replacement_player_ids:
-        canonical_player_ids_map[player_id] = player_id
-    assert len(canonical_player_ids_map) == len(players_by_id)
-    print("Chosen canonical player ids")
-
-    for session_id in session_results.keys():
-        player_results_map: dict[int, tuple[int, float]] = session_results[session_id]
-        places: set[int] = {v[0] for v in player_results_map.values()}
-        assert places == {1, 2, 3, 4}
-        new_player_results_map: dict[int, tuple[int, float]] = {}
-        for player_id, player_results in player_results_map.items():
-            new_player_id = canonical_player_ids_map[player_id]
-            new_player_results_map[new_player_id] = player_results
-        session_results[session_id] = new_player_results_map
-    print("Player ids replaced in session results")
-
-    player_ids_to_forget = set(players_by_id.keys()) - set(canonical_player_ids_map.values())
-    for player_id in player_ids_to_forget:
-        players_by_id.pop(player_id)
-    print("Duplicate players deleted")
 
     sessions_by_date: list[int] = list(session_results.keys())
     sessions_by_date.sort(key=lambda s: session_date_map[s])
