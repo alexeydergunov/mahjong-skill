@@ -41,7 +41,6 @@ ENTRYPOINT echo "Source files hashes:" && md5sum /work/*.py && md5sum /work/rati
            --event-list-file /work/out/portal_tournaments.json \
            --old-pantheon-games-load-file /work/shared/online_old_games.txt \
            --output-file /work/out/portal_export_openskill_pl_online.json > /work/out/log_openskill_pl_online.txt && \
-           ls -la /work/out/* && \
            echo "Done"
 
 # Usage:
