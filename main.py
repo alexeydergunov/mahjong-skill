@@ -85,6 +85,11 @@ def main():
     online: bool = args.online
     print(f"Online: {online}")
 
+    # Yoroshiku League hack - it's missing on portal
+    if online and (new_portal_event_ids is not None):
+        new_portal_event_ids.add(106)
+        new_portal_event_ids.add(254)
+
     # db_load.log_tournaments_info(pantheon_type="old", online=online)
     # db_load.log_tournaments_info(pantheon_type="new", online=online)
 
@@ -112,7 +117,7 @@ def main():
         new_games: list[Game] = db_load.load_games(pantheon_type="new",
                                                    online=online,
                                                    player_names_file="shared/players-data.csv",
-                                                   force_event_ids_to_load=None if online else [215, 400, 430, 467])
+                                                   force_event_ids_to_load=[106, 254] if online else [215, 400, 430, 467])
         print(f"{len(new_games)} new games loaded from DB")
     if args.new_pantheon_games_dump_file is not None:
         Game.dump_list(games=new_games, filename=args.new_pantheon_games_dump_file)
