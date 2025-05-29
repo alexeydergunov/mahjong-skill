@@ -5,10 +5,17 @@ set -e
 # Don't forget to build docker image:
 # docker build -t mahjong-skill .
 
-# Copy actual players info
+echo "Running 'git pull' on repository mahjong-skill-private-files..."
+cd ../mahjong-skill-private-files
+git pull
+cd ../mahjong-skill
+
+echo "Copying files from repository mahjong-skill-private-files to directory 'shared'..."
 cp ../mahjong-skill-private-files/players_mapping.py ./shared/players_mapping.py
 cp ../mahjong-skill-private-files/shared/online_old_games.txt ./shared/online_old_games.txt
 cp ../mahjong-skill-private-files/shared/pantheon_old_games.txt ./shared/pantheon_old_games.txt
+
+echo "Running docker..."
 
 docker run \
   -e MIMIR_USER=mimir \
@@ -28,4 +35,5 @@ docker run \
 
 echo "Docker run completed"
 
+echo "Files in directory 'docker-out':"
 ls -la ./docker-out/
