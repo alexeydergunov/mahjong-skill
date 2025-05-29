@@ -5,6 +5,11 @@ set -e
 # Don't forget to build docker image:
 # docker build -t mahjong-skill .
 
+# Copy actual players info
+cp ../mahjong-skill-private-files/players_mapping.py ./shared/players_mapping.py
+cp ../mahjong-skill-private-files/shared/online_old_games.txt ./shared/online_old_games.txt
+cp ../mahjong-skill-private-files/shared/pantheon_old_games.txt ./shared/pantheon_old_games.txt
+
 docker run \
   -e MIMIR_USER=mimir \
   -e MIMIR_PASSWORD=pgpass \

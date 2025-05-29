@@ -1,6 +1,6 @@
 from collections import defaultdict
 
-from players_mapping import SAME_PLAYERS
+from shared.players_mapping import SAME_PLAYERS
 from structs import Game
 from structs import Player
 

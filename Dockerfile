@@ -11,7 +11,8 @@ RUN apk --no-cache add curl jq
 COPY *.py /work/
 COPY rating_impl/*.py /work/rating_impl/
 
-ENTRYPOINT echo "Source files hashes:" && md5sum /work/*.py && md5sum /work/rating_impl/*.py && \
+ENTRYPOINT echo "Files hashes:" && md5sum /work/*.py && md5sum /work/rating_impl/*.py && \
+           md5sum /work/shared/players_mapping.py && md5sum /work/shared/*_old_games.txt && \
            echo "Loading portal tournaments..." && \
            curl -X GET 'https://mahjong.click/api/v0/tournaments/finished/' | jq > /work/out/portal_tournaments.json && \
            ls -la /work/out/portal_tournaments.json && \

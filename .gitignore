@@ -1,3 +1,10 @@
 .idea/
 __pycache__
-players_mapping.py
+
+shared/players_mapping.py
+
+shared/online_new_games*.txt
+shared/online_old_games.txt
+shared/pantheon_new_games*.txt
+shared/pantheon_old_games.txt
+shared/players-data*.csv

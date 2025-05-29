@@ -6,7 +6,7 @@ from typing import TypeVar
 
 import ujson
 
-from players_mapping import REPLACEMENT_PLAYERS
+from shared.players_mapping import REPLACEMENT_PLAYERS
 
 R = TypeVar("R")
 

@@ -16,6 +16,8 @@
 - players_mapping.py - соответствия имен игроков
 - shared/pantheon_old_games.txt - данные из базы старого пантеона
 
+Эти файлы автоматически подцепятся, если скачать репозиторий mahjong-skill-private-files параллельно с текущим репозиторием.
+
 Собрать образ: `docker build -t mahjong-skill .`
 
 Запустить: `./remote_run.sh`
