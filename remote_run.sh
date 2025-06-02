@@ -8,12 +8,12 @@ set -e
 # Search private files repository in parent directory
 CURRENT_DIR=`pwd`
 echo "Current dir: $CURRENT_DIR"
-FILEPATH=$(realpath $(find .. -name "pantheon_new_games__2024_12_02.txt"))
+FILEPATH=$(find .. -name "pantheon_new_games__2024_12_02.txt")
 if [ -z $FILEPATH ]; then
   echo "Repository mahjong-skill-private-files is not found"
   exit 1
 else
-  PRIVATE_DIR=$(dirname $(dirname $FILEPATH))
+  PRIVATE_DIR=$(dirname $(dirname $(realpath $FILEPATH)))
   echo "Repository mahjong-skill-private-files directory: $PRIVATE_DIR"
 fi
 
