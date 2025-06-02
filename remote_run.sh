@@ -5,15 +5,27 @@ set -e
 # Don't forget to build docker image:
 # docker build -t mahjong-skill .
 
+# Search private files repository in parent directory
+CURRENT_DIR=`pwd`
+echo "Current dir: $CURRENT_DIR"
+FILEPATH=$(realpath $(find .. -name "pantheon_new_games__2024_12_02.txt"))
+if [ -z $FILEPATH ]; then
+  echo "Repository mahjong-skill-private-files is not found"
+  exit 1
+else
+  PRIVATE_DIR=$(dirname $(dirname $FILEPATH))
+  echo "Repository mahjong-skill-private-files directory: $PRIVATE_DIR"
+fi
+
 echo "Running 'git pull' on repository mahjong-skill-private-files..."
-cd ../mahjong-skill-private-files
+cd $PRIVATE_DIR
 git pull
-cd ../mahjong-skill
+cd $CURRENT_DIR
 
 echo "Copying files from repository mahjong-skill-private-files to directory 'shared'..."
-cp ../mahjong-skill-private-files/players_mapping.py ./shared/players_mapping.py
-cp ../mahjong-skill-private-files/shared/online_old_games.txt ./shared/online_old_games.txt
-cp ../mahjong-skill-private-files/shared/pantheon_old_games.txt ./shared/pantheon_old_games.txt
+cp $PRIVATE_DIR/players_mapping.py ./shared/players_mapping.py
+cp $PRIVATE_DIR/shared/online_old_games.txt ./shared/online_old_games.txt
+cp $PRIVATE_DIR/shared/pantheon_old_games.txt ./shared/pantheon_old_games.txt
 
 echo "Running docker..."
 
