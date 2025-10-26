@@ -37,7 +37,7 @@ docker run \
   -e MIMIR_PORT=5432 \
   -e FREY_USER=frey \
   -e FREY_PASSWORD=pgpass \
-  -e FREY_DB_NAME=frey \
+  -e FREY_DB_NAME=frey2 \
   -e FREY_HOST=db.pantheon.internal \
   -e FREY_PORT=5432 \
   --network=pantheon_internal_net \

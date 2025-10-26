@@ -29,7 +29,7 @@ class DbConnectionProvider:
         elif db_type == "frey":
             user = os.getenv("FREY_USER") or "frey"
             password = os.getenv("FREY_PASSWORD") or "frey"
-            db_name = os.getenv("FREY_DB_NAME") or "frey"
+            db_name = os.getenv("FREY_DB_NAME") or "frey2"
             host = os.getenv("FREY_HOST") or "localhost"
             port = os.getenv("FREY_PORT") or 5432
             port = int(port)
