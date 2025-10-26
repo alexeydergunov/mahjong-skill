@@ -35,6 +35,7 @@ class DbConnectionProvider:
             port = int(port)
         else:
             raise Exception(f"Wrong db_type {db_type}")
+        print(f"Will connect to: {host}:{port}, db name {db_name}, user {user}, password {password[0]}...{password[-1]}")
         return psycopg2.connect(user=user, password=password, host=host, port=port, dbname=db_name)
 
     def get_session(self, db_type: str) -> Session:
