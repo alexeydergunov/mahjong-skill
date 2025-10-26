@@ -2,11 +2,11 @@ FROM python:3.12.8-alpine3.21
 
 WORKDIR /work/
 
-COPY requirements.txt /work/
-RUN pip install -r requirements.txt
-
 # jq to output Russian letters
 RUN apk --no-cache add curl jq
+
+COPY requirements.txt /work/
+RUN pip install -r requirements.txt
 
 COPY *.py /work/
 COPY rating_impl/*.py /work/rating_impl/
