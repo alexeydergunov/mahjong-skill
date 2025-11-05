@@ -117,7 +117,7 @@ def main():
         new_games: list[Game] = db_load.load_games(pantheon_type="new",
                                                    online=online,
                                                    player_names_file="shared/players-data.csv",
-                                                   force_event_ids_to_load=[106, 254] if online else [215, 400, 430, 467])
+                                                   force_event_ids_to_load=[106, 254, 692] if online else [215, 400, 430, 467])
         print(f"{len(new_games)} new games loaded from DB")
     if args.new_pantheon_games_dump_file is not None:
         Game.dump_list(games=new_games, filename=args.new_pantheon_games_dump_file)
