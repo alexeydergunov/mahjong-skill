@@ -17,6 +17,7 @@ class Player:
         self.old_ids = old_ids
         self.new_ids = new_ids
         self.is_replacement_player: bool = (name in REPLACEMENT_PLAYERS)
+        self.temporary_replacements: set[tuple[str, int, int]] = set()  # pantheon_type, event_id, session_id
 
     def remember_other_ids(self, ids: list[int]):
         if len(self.old_ids) > 0:

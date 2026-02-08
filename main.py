@@ -12,6 +12,7 @@ from datetime import datetime
 import db_load
 from players_work import merge_old_and_new_player_ids
 from players_work import replace_names
+from players_work import replace_temporary_replacement_players
 from rating_calc import calc_ratings
 from rating_impl import *
 from structs import Game
@@ -129,6 +130,7 @@ def main():
 
     all_games = old_games + new_games
     merge_old_and_new_player_ids(games=all_games)
+    replace_temporary_replacement_players(games=all_games)
     player_stats_map: dict[Player, PlayerStats] = calc_ratings(games=all_games, rating_model=rating_model, date_to=date_to)
 
     export_results = []

@@ -1,12 +1,18 @@
-SAME_PLAYERS = [
+SAME_PLAYERS: list[list[str]] = [
     ["Иванов Иван", "Иван Иванов"],
     ["Петров Петр", "Петров Пётр", "Petrov Petr"],
 ]
 
-REPLACEMENT_PLAYERS = [
+REPLACEMENT_PLAYERS: list[str] = [
     "Игрок Замены",
     "Игрок замены 1",
     "Игрок замены 2",
     "Игрок замены 3",
     "Игрок замены 4",
 ]
+
+TEMPORARY_REPLACEMENTS: dict[str, dict[tuple[str, int], tuple[int, int]]] = {
+    "Иванов Иван": {
+        ("new", 777): (5, 8),  # с 5 по 8 игру ивента 777 в новом пантеоне
+    },
+}

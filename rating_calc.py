@@ -6,6 +6,13 @@ from structs import PlayerStats
 from structs import RatingModel
 
 
+def is_replacement_player_for_game(player: Player, game: Game) -> bool:
+    if player.is_replacement_player:
+        return True
+    key = (game.pantheon_type, game.event_id, game.session_id)
+    return key in player.temporary_replacements
+
+
 def calc_ratings(games: list[Game], rating_model: RatingModel, date_to: date) -> dict[Player, PlayerStats]:
     games.sort(key=lambda g: g.session_date)  # there were games in old pantheon played later than some games in new pantheon
     games = [g for g in games if g.session_date.date() <= date_to]
@@ -14,14 +21,14 @@ def calc_ratings(games: list[Game], rating_model: RatingModel, date_to: date) ->
     player_stats_map: dict[Player, PlayerStats] = {}
     for game in games:
         for player in game.players:
-            if not player.is_replacement_player:
+            if not is_replacement_player_for_game(player=player, game=game):
                 if player not in player_stats_map:
                     player_stats_map[player] = PlayerStats.create(rating_model=rating_model)
     print(f"Start ratings initialized for {len(player_stats_map)} players")
 
     for game in games:
         for player in game.players:
-            if not player.is_replacement_player:
+            if not is_replacement_player_for_game(player=player, game=game):
                 player_stats_map[player].event_game_counts[(game.pantheon_type, game.event_id)] += 1
                 if player_stats_map[player].last_game_date is not None:
                     days_since_last_game = (game.session_date.date() - player_stats_map[player].last_game_date.date()).days
@@ -30,7 +37,7 @@ def calc_ratings(games: list[Game], rating_model: RatingModel, date_to: date) ->
 
         players_with_scores = []
         for i in range(4):
-            if not game.players[i].is_replacement_player:
+            if not is_replacement_player_for_game(player=game.players[i], game=game):
                 players_with_scores.append((game.players[i], game.scores[i]))
         players_with_scores.sort(key=lambda ps: (-ps[1], ps[0].name))
 
@@ -44,7 +51,7 @@ def calc_ratings(games: list[Game], rating_model: RatingModel, date_to: date) ->
 
         for i in range(4):
             player = game.players[i]
-            if not player.is_replacement_player:
+            if not is_replacement_player_for_game(player=player, game=game):
                 place = game.places[i]
                 player_stats_map[player].places[place - 1] += 1
                 if player_stats_map[player].last_game_date is None or game.session_date > player_stats_map[player].last_game_date:
