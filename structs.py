@@ -42,7 +42,7 @@ class Player:
         return Player(name=name, old_ids=[], new_ids=[player_id])
 
     def to_json(self) -> dict[str, Any]:
-        data = {"name": self.name}
+        data: dict[str, Any] = {"name": self.name}
         if len(self.old_ids) > 0:
             data["old_ids"] = self.old_ids
         if len(self.new_ids) > 0:
