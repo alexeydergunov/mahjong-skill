@@ -141,6 +141,6 @@ def replace_temporary_replacement_players(games: list[Game]):
                         player.temporary_replacements.add((pantheon_type, event_id, game.session_id))
                         print(f"Added player {player.name} as a replacement player "
                               f"for event {event_id} in pantheon type {pantheon_type}, "
-                              f"game {game.session_id} (index {index + 1} / {len(player_event_games)})")
+                              f"session {game.session_id} (index {index + 1} / {len(player_event_games)})")
 
     print("Temporary replacements processed")
