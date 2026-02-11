@@ -2,8 +2,8 @@
 
 set -e
 
-# Don't forget to build docker image:
-# docker build -t mahjong-skill .
+echo "Running 'git pull' on repository mahjong-skill..."
+git pull
 
 # Search private files repository in parent directory
 CURRENT_DIR=`pwd`
@@ -26,6 +26,9 @@ echo "Copying files from repository mahjong-skill-private-files to directory 'sh
 cp $PRIVATE_DIR/players_mapping.py ./shared/players_mapping.py
 cp $PRIVATE_DIR/shared/online_old_games.txt ./shared/online_old_games.txt
 cp $PRIVATE_DIR/shared/pantheon_old_games.txt ./shared/pantheon_old_games.txt
+
+echo "Building docker image..."
+docker build -t mahjong-skill .
 
 echo "Running docker..."
 
