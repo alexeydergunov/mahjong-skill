@@ -61,6 +61,7 @@ def main():
     else:
         print("Neither of '--load-from-portal', '--event-list-file' options are specified")
 
+    portal_names_map: dict[tuple[str, int], str] = {}
     old_portal_event_ids = None
     new_portal_event_ids = None
     if portal_data is not None:
@@ -73,6 +74,10 @@ def main():
                 old_portal_event_ids.add(pantheon_id)
             elif pantheon_type == "new":
                 new_portal_event_ids.add(pantheon_id)
+            for player_data in portal_event.get("players", []):
+                player_name = player_data["player_name"]
+                player_id = player_data["player_id"]
+                portal_names_map[(pantheon_type, player_id)] = player_name
         print(f"Loaded {len(old_portal_event_ids)} old events and {len(new_portal_event_ids)} new events from tournaments data")
 
     if args.date_to is not None:
@@ -100,6 +105,7 @@ def main():
     else:
         old_games: list[Game] = db_load.load_games(pantheon_type="old",
                                                    online=online,
+                                                   portal_names_map=portal_names_map,
                                                    player_names_file=None,
                                                    force_event_ids_to_load=None if online else [142, 236])
         print(f"{len(old_games)} old games loaded from DB")
@@ -117,6 +123,7 @@ def main():
     else:
         new_games: list[Game] = db_load.load_games(pantheon_type="new",
                                                    online=online,
+                                                   portal_names_map=portal_names_map,
                                                    player_names_file="shared/players-data.csv",
                                                    force_event_ids_to_load=[106, 254, 692] if online else [215, 400, 430, 467])
         print(f"{len(new_games)} new games loaded from DB")

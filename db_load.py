@@ -72,7 +72,12 @@ def log_tournaments_info(pantheon_type: str, online: bool):
 
 
 # noinspection SqlDialectInspection,SqlNoDataSourceInspection
-def load_games(pantheon_type: str, online: bool, player_names_file: Optional[str], force_event_ids_to_load: Optional[list[int]]) -> list[Game]:
+def load_games(pantheon_type: str,
+               online: bool,
+               portal_names_map: dict[tuple[str, int], str],
+               player_names_file: Optional[str],
+               force_event_ids_to_load: Optional[list[int]],
+               ) -> list[Game]:
     db_connection_provider = DbConnectionProvider(pantheon_type=pantheon_type)
 
     good_event_ids: set[int] = set()
@@ -160,6 +165,12 @@ def load_games(pantheon_type: str, online: bool, player_names_file: Optional[str
                     while "\"\"" in player_name:
                         player_name = player_name.replace("\"\"", "\"")
                     assert player_id not in players_by_id
+                    if (pantheon_type, player_id) in portal_names_map:
+                        portal_name = portal_names_map[(pantheon_type, player_id)]
+                        if portal_name != player_name:
+                            print(f"Force use portal name {portal_name} instead of {player_name} "
+                                  f"for type {pantheon_type}, id {player_id}")
+                            player_name = portal_name
                     players_by_id[player_id] = Player.create_new(name=player_name, player_id=player_id)
             print(f"{len(players_by_id)} players loaded from csv file")
         else:
@@ -170,6 +181,12 @@ def load_games(pantheon_type: str, online: bool, player_names_file: Optional[str
                     player_id = int(row[0])
                     player_name = row[1].strip()
                     assert player_id not in players_by_id
+                    if (pantheon_type, player_id) in portal_names_map:
+                        portal_name = portal_names_map[(pantheon_type, player_id)]
+                        if portal_name != player_name:
+                            print(f"Force use portal name {portal_name} instead of {player_name} "
+                                  f"for type {pantheon_type}, id {player_id}")
+                            player_name = portal_name
                     players_by_id[player_id] = Player.create_new(name=player_name, player_id=player_id)
             print(f"{len(players_by_id)} players loaded from new DB")
     elif pantheon_type == "old":
@@ -179,6 +196,12 @@ def load_games(pantheon_type: str, online: bool, player_names_file: Optional[str
                 player_id = int(row[0])
                 player_name = row[1].strip()
                 assert player_id not in players_by_id
+                if (pantheon_type, player_id) in portal_names_map:
+                    portal_name = portal_names_map[(pantheon_type, player_id)]
+                    if portal_name != player_name:
+                        print(f"Force use portal name {portal_name} instead of {player_name} "
+                              f"for type {pantheon_type}, id {player_id}")
+                        player_name = portal_name
                 players_by_id[player_id] = Player.create_old(name=player_name, player_id=player_id)
         print(f"{len(players_by_id)} players loaded from old DB")
     else:
