@@ -103,7 +103,8 @@ def main():
     # db_load.log_tournaments_info(pantheon_type="new", online=online)
 
     if args.old_pantheon_games_load_file is not None:
-        old_games: list[Game] = Game.load_list(filename=args.old_pantheon_games_load_file)
+        old_games: list[Game] = Game.load_list(filename=args.old_pantheon_games_load_file,
+                                               portal_names_map=portal_names_map)
         print(f"{len(old_games)} old games loaded from file {args.old_pantheon_games_load_file}")
     else:
         old_games: list[Game] = db_load.load_games(pantheon_type="old",
@@ -121,7 +122,8 @@ def main():
         print(f"{len(old_games)} old games remaining after filtering by portal event ids")
 
     if args.new_pantheon_games_load_file is not None:
-        new_games: list[Game] = Game.load_list(filename=args.new_pantheon_games_load_file)
+        new_games: list[Game] = Game.load_list(filename=args.new_pantheon_games_load_file,
+                                               portal_names_map=portal_names_map)
         print(f"{len(new_games)} new games loaded from file {args.new_pantheon_games_load_file}")
     else:
         new_games: list[Game] = db_load.load_games(pantheon_type="new",

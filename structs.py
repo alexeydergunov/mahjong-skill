@@ -50,11 +50,27 @@ class Player:
         return data
 
     @staticmethod
-    def from_json(data: dict[str, Any]) -> 'Player':
+    def get_portal_name(old_ids: list[int], new_ids: list[int],
+                        portal_names_map: dict[tuple[str, int], str]) -> Optional[str]:
+        for new_id in sorted(new_ids, reverse=True):
+            portal_name = portal_names_map.get(("new", new_id))
+            if portal_name is not None:
+                return portal_name
+        for old_id in sorted(old_ids, reverse=True):
+            portal_name = portal_names_map.get(("old", old_id))
+            if portal_name is not None:
+                return portal_name
+        return None
+
+    @staticmethod
+    def from_json(data: dict[str, Any], portal_names_map: dict[tuple[str, int], str]) -> 'Player':
+        old_ids = data.get("old_ids", [])
+        new_ids = data.get("new_ids", [])
+        portal_name = Player.get_portal_name(old_ids=old_ids, new_ids=new_ids, portal_names_map=portal_names_map)
         player = Player(
-            name=data["name"],
-            old_ids=data.get("old_ids", []),
-            new_ids=data.get("new_ids", []),
+            name=portal_name or data["name"],
+            old_ids=old_ids,
+            new_ids=new_ids,
         )
         return player
 
@@ -135,13 +151,13 @@ class Game:
         }
 
     @staticmethod
-    def from_json(data: dict[str, Any]) -> 'Game':
+    def from_json(data: dict[str, Any], portal_names_map: dict[tuple[str, int], str]) -> 'Game':
         return Game(
             pantheon_type=data["pantheon_type"],
             event_id=data["event_id"],
             session_id=data["session_id"],
             session_date=datetime.fromisoformat(data["session_date"]),
-            players=[Player.from_json(data=pd) for pd in data["players"]],
+            players=[Player.from_json(data=pd, portal_names_map=portal_names_map) for pd in data["players"]],
             places=data["places"],
             scores=data["scores"],
         )
@@ -154,10 +170,10 @@ class Game:
                 f.write("\n")
 
     @staticmethod
-    def load_list(filename: str) -> list['Game']:
+    def load_list(filename: str, portal_names_map: dict[tuple[str, int], str]) -> list['Game']:
         games = []
         with open(filename, "r") as f:
             for line in f:
                 data = ujson.loads(line.strip())
-                games.append(Game.from_json(data=data))
+                games.append(Game.from_json(data=data, portal_names_map=portal_names_map))
         return games
