@@ -1,4 +1,4 @@
-openskill==6.0.1
+openskill==6.2.0
 psycopg2-binary==2.9.10
 requests==2.32.3
 SQLAlchemy==2.0.36
