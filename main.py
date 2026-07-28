@@ -75,9 +75,12 @@ def main():
             elif pantheon_type == "new":
                 new_portal_event_ids.add(pantheon_id)
             for player_data in portal_event.get("players", []):
-                player_name = player_data["player_name"]
-                player_id = player_data["player_id"]
-                portal_names_map[(pantheon_type, player_id)] = player_name
+                player_slug = player_data.get("player_slug")
+                if player_slug is not None:
+                    # player exists on portal
+                    player_name = player_data["player_name"]
+                    player_id = player_data["player_pantheon_id"]
+                    portal_names_map[(pantheon_type, player_id)] = player_name
         print(f"Loaded {len(old_portal_event_ids)} old events, "
               f"{len(new_portal_event_ids)} new events "
               f"and {len(portal_names_map)} player pantheon ids "
