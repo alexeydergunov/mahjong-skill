@@ -194,7 +194,11 @@ def main():
         assert rating_for_sorting is not None
         assert player_stats.mean_and_stddev is not None
         mean, stddev = player_stats.mean_and_stddev
-        print(f"Player {'*' if player.slug is None else ''}{player.name} (old ids {player.old_ids}, new ids {player.new_ids}): confirmed rating {rating_for_sorting:.3f} ({mean:.3f} +/- {stddev:.3f}) in {total_games} games ({places})")
+        last_game_date_str = player_stats.last_game_date.strftime("%Y-%m-%d")
+        print(f"Player {'*' if player.slug is None else ''}{player.name} "
+              f"(old ids {player.old_ids}, new ids {player.new_ids}): "
+              f"confirmed rating {rating_for_sorting:.3f} ({mean:.3f} +/- {stddev:.3f}) "
+              f"in {total_games} games ({places}, last game at {last_game_date_str})")
         sorted_events: list[tuple[str, int]] = sorted(player_stats.event_game_counts.keys(), key=lambda x: (x[0][2], x[1]))  # 'ol[d]' < 'ne[w]'
         export_element: dict[str, Any] = {
             "player": player.name,
@@ -204,7 +208,7 @@ def main():
             "stddev": round(stddev, 3),
             "game_count": total_games,
             "places": str(places),
-            "last_game_date": player_stats.last_game_date.strftime("%Y-%m-%d"),
+            "last_game_date": last_game_date_str,
             "event_game_counts": [t + "_" + str(i) + " -> " + str(player_stats.event_game_counts[(t, i)]) for (t, i) in sorted_events],
         }
         if len(player.old_ids) > 0:
