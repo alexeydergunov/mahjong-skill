@@ -191,10 +191,12 @@ def main():
         # if date_to - player_stats.last_game_date.date() > timedelta(days=365 * 2):
         #     continue
         rating_for_sorting = player_stats.rating_for_sorting
+        assert rating_for_sorting is not None
+        assert player_stats.mean_and_stddev is not None
         mean, stddev = player_stats.mean_and_stddev
         print(f"Player {'*' if player.slug is None else ''}{player.name} (old ids {player.old_ids}, new ids {player.new_ids}): confirmed rating {rating_for_sorting:.3f} ({mean:.3f} +/- {stddev:.3f}) in {total_games} games ({places})")
         sorted_events: list[tuple[str, int]] = sorted(player_stats.event_game_counts.keys(), key=lambda x: (x[0][2], x[1]))  # 'ol[d]' < 'ne[w]'
-        export_element = {
+        export_element: dict[str, Any] = {
             "player": player.name,
             "slug": player.slug,
             "rating": round(rating_for_sorting, 3),
@@ -220,7 +222,7 @@ def main():
         )
 
 
-def export_to_file(rating_model_name: str, all_games: list[Game], export_results: list[dict[str, str]], filename: str):
+def export_to_file(rating_model_name: str, all_games: list[Game], export_results: list[dict[str, Any]], filename: str):
     games_by_event: dict[tuple[str, int], int] = defaultdict(int)
     for game in all_games:
         games_by_event[(game.pantheon_type, game.event_id)] += 1
