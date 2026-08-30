@@ -113,10 +113,11 @@ def main():
     online: bool = args.online
     print(f"Online: {online}")
 
-    # Yoroshiku League hack - it's missing on portal
+    # Yoroshiku League, Kawa S2 Div B tie-breaks - missing on portal
     if online and (new_portal_event_ids is not None):
         new_portal_event_ids.add(106)
         new_portal_event_ids.add(254)
+        new_portal_event_ids.add(692)
 
     # db_load.log_tournaments_info(pantheon_type="old", online=online)
     # db_load.log_tournaments_info(pantheon_type="new", online=online)
@@ -128,11 +129,17 @@ def main():
         )
         print(f"{len(old_games)} old games loaded from file {args.old_pantheon_games_load_file}")
     else:
-        old_games: list[Game] = db_load.load_games(pantheon_type="old",
-                                                   online=online,
-                                                   player_creator=player_creator,
-                                                   player_names_file=None,
-                                                   force_event_ids_to_load=None if online else [142, 236])
+        if online:
+            force_event_ids_to_load = None
+        else:
+            force_event_ids_to_load = [142, 236]  # created as club event
+        old_games: list[Game] = db_load.load_games(
+            pantheon_type="old",
+            online=online,
+            player_creator=player_creator,
+            player_names_file=None,
+            force_event_ids_to_load=force_event_ids_to_load,
+        )
         print(f"{len(old_games)} old games loaded from DB")
     if args.old_pantheon_games_dump_file is not None:
         Game.dump_list(games=old_games, filename=args.old_pantheon_games_dump_file)
@@ -148,11 +155,20 @@ def main():
         )
         print(f"{len(new_games)} new games loaded from file {args.new_pantheon_games_load_file}")
     else:
-        new_games: list[Game] = db_load.load_games(pantheon_type="new",
-                                                   online=online,
-                                                   player_creator=player_creator,
-                                                   player_names_file="shared/players-data.csv",
-                                                   force_event_ids_to_load=[106, 254, 692] if online else [215, 400, 430, 467])
+        if online:
+            force_event_ids_to_load = [
+                106, 254,  # Yoroshiku League
+                692,  # Kawa S2 Div B tie-breaks
+            ]
+        else:
+            force_event_ids_to_load = [215]  # created as club event
+        new_games: list[Game] = db_load.load_games(
+            pantheon_type="new",
+            online=online,
+            player_creator=player_creator,
+            player_names_file="shared/players-data.csv",
+            force_event_ids_to_load=force_event_ids_to_load,
+        )
         print(f"{len(new_games)} new games loaded from DB")
     if args.new_pantheon_games_dump_file is not None:
         Game.dump_list(games=new_games, filename=args.new_pantheon_games_dump_file)
