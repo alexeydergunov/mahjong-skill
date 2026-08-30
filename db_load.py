@@ -9,8 +9,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 from sqlalchemy.orm import sessionmaker
 
-from structs import Game
-from structs import Player
+from structs import Game, PlayerCreator
 
 
 class DbConnectionProvider:
@@ -74,7 +73,7 @@ def log_tournaments_info(pantheon_type: str, online: bool):
 # noinspection SqlDialectInspection,SqlNoDataSourceInspection
 def load_games(pantheon_type: str,
                online: bool,
-               portal_players_map: dict[tuple[str, int], Player],
+               player_creator: PlayerCreator,
                player_names_file: Optional[str],
                force_event_ids_to_load: Optional[list[int]],
                ) -> list[Game]:
@@ -142,7 +141,7 @@ def load_games(pantheon_type: str,
         session_date_map.pop(session_id)
         session_results.pop(session_id)
 
-    players_by_id: dict[int, Player] = {}
+    player_names_by_id: dict[int, str] = {}
     if pantheon_type == "new":
         if player_names_file is not None and os.path.exists(player_names_file):
             print(f"Loading players from csv file {player_names_file}")
@@ -164,15 +163,9 @@ def load_games(pantheon_type: str,
                     player_name = player_name.strip()
                     while "\"\"" in player_name:
                         player_name = player_name.replace("\"\"", "\"")
-                    assert player_id not in players_by_id
-                    if (pantheon_type, player_id) in portal_players_map:
-                        portal_player = portal_players_map[(pantheon_type, player_id)]
-                        print(f"Force use portal player {portal_player.name} instead of {player_name} "
-                              f"for type {pantheon_type}, id {player_id}")
-                        players_by_id[player_id] = portal_player
-                    else:
-                        players_by_id[player_id] = Player.create_new_unknown(name=player_name, player_id=player_id)
-            print(f"{len(players_by_id)} players loaded from csv file")
+                    assert player_id not in player_names_by_id
+                    player_names_by_id[player_id] = player_name
+            print(f"{len(player_names_by_id)} player names loaded from csv file")
         else:
             print("Loading players from Frey DB")
             with db_connection_provider.get_session(db_type="frey") as db_session:
@@ -180,30 +173,18 @@ def load_games(pantheon_type: str,
                 for row in result.all():
                     player_id = int(row[0])
                     player_name = row[1].strip()
-                    assert player_id not in players_by_id
-                    if (pantheon_type, player_id) in portal_players_map:
-                        portal_player = portal_players_map[(pantheon_type, player_id)]
-                        print(f"Force use portal player {portal_player.name} instead of {player_name} "
-                              f"for type {pantheon_type}, id {player_id}")
-                        players_by_id[player_id] = portal_player
-                    else:
-                        players_by_id[player_id] = Player.create_new_unknown(name=player_name, player_id=player_id)
-            print(f"{len(players_by_id)} players loaded from new DB")
+                    assert player_id not in player_names_by_id
+                    player_names_by_id[player_id] = player_name
+            print(f"{len(player_names_by_id)} player names loaded from new DB")
     elif pantheon_type == "old":
         with db_connection_provider.get_session(db_type="mimir") as db_session:
             result = db_session.execute(text("select id, display_name from player"))
             for row in result.all():
                 player_id = int(row[0])
                 player_name = row[1].strip()
-                assert player_id not in players_by_id
-                if (pantheon_type, player_id) in portal_players_map:
-                    portal_player = portal_players_map[(pantheon_type, player_id)]
-                    print(f"Force use portal player {portal_player.name} instead of {player_name} "
-                          f"for type {pantheon_type}, id {player_id}")
-                    players_by_id[player_id] = portal_player
-                else:
-                    players_by_id[player_id] = Player.create_old_unknown(name=player_name, player_id=player_id)
-        print(f"{len(players_by_id)} players loaded from old DB")
+                assert player_id not in player_names_by_id
+                player_names_by_id[player_id] = player_name
+        print(f"{len(player_names_by_id)} player names loaded from old DB")
     else:
         raise Exception(f"Wrong pantheon_type: {pantheon_type}")
 
@@ -217,12 +198,12 @@ def load_games(pantheon_type: str,
         event_id = session_event_map[session_id]
         player_results_map = session_results[session_id]
         player_ids: list[int] = []
-        players: list[Player] = []
+        player_names: list[str] = []
         places: list[int] = []
         scores: list[float] = []
         for player_id, (place, score) in player_results_map.items():
             player_ids.append(player_id)
-            players.append(players_by_id[player_id])
+            player_names.append(player_names_by_id[player_id])
             places.append(place)
             scores.append(score)
         if -999.99 <= min(scores) or max(scores) <= 999.99:  # can be +42000 or +42.0
@@ -233,8 +214,9 @@ def load_games(pantheon_type: str,
                           session_id=session_id,
                           session_date=session_date,
                           player_ids=player_ids,
-                          players=players,
+                          player_names=player_names,
                           places=places,
-                          scores=scores))
+                          scores=scores,
+                          player_creator=player_creator))
     print("Games built")
     return games

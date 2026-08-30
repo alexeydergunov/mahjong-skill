@@ -15,6 +15,7 @@ from rating_calc import calc_ratings
 from rating_impl import *
 from structs import Game
 from structs import Player
+from structs import PlayerCreator
 from structs import PlayerStats
 
 
@@ -97,6 +98,7 @@ def main():
               f"{len(new_portal_event_ids)} new events "
               f"and {len(portal_players_map)} portal players "
               f"from portal tournaments data")
+    player_creator = PlayerCreator(portal_players_map=portal_players_map)
 
     if args.date_to is not None:
         date_to_str = args.date_to
@@ -118,12 +120,15 @@ def main():
     # db_load.log_tournaments_info(pantheon_type="new", online=online)
 
     if args.old_pantheon_games_load_file is not None:
-        old_games: list[Game] = Game.load_list(filename=args.old_pantheon_games_load_file)
+        old_games: list[Game] = Game.load_list(
+            filename=args.old_pantheon_games_load_file,
+            player_creator=player_creator,
+        )
         print(f"{len(old_games)} old games loaded from file {args.old_pantheon_games_load_file}")
     else:
         old_games: list[Game] = db_load.load_games(pantheon_type="old",
                                                    online=online,
-                                                   portal_players_map=portal_players_map,
+                                                   player_creator=player_creator,
                                                    player_names_file=None,
                                                    force_event_ids_to_load=None if online else [142, 236])
         print(f"{len(old_games)} old games loaded from DB")
@@ -135,12 +140,15 @@ def main():
         print(f"{len(old_games)} old games remaining after filtering by portal event ids")
 
     if args.new_pantheon_games_load_file is not None:
-        new_games: list[Game] = Game.load_list(filename=args.new_pantheon_games_load_file)
+        new_games: list[Game] = Game.load_list(
+            filename=args.new_pantheon_games_load_file,
+            player_creator=player_creator,
+        )
         print(f"{len(new_games)} new games loaded from file {args.new_pantheon_games_load_file}")
     else:
         new_games: list[Game] = db_load.load_games(pantheon_type="new",
                                                    online=online,
-                                                   portal_players_map=portal_players_map,
+                                                   player_creator=player_creator,
                                                    player_names_file="shared/players-data.csv",
                                                    force_event_ids_to_load=[106, 254, 692] if online else [215, 400, 430, 467])
         print(f"{len(new_games)} new games loaded from DB")

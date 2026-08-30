@@ -77,6 +77,27 @@ class Player:
         return self.key() == other.key()
 
 
+class PlayerCreator:
+    def __init__(self, portal_players_map: dict[tuple[str, int], Player]):
+        self.portal_players_map = portal_players_map
+
+    def get_or_create_player(self, pantheon_type: str, player_id: int, player_name: str) -> Player:
+        if (pantheon_type, player_id) in self.portal_players_map:
+            portal_player = self.portal_players_map[(pantheon_type, player_id)]
+            print(f"Use portal player {portal_player.name} instead of {player_name} "
+                  f"for type {pantheon_type}, id {player_id}")
+            return portal_player
+        else:
+            print(f"There is no portal player {player_name} for type {pantheon_type}, id {player_id}")
+            match pantheon_type:
+                case "old":
+                    return Player.create_old_unknown(name=player_name, player_id=player_id)
+                case "new":
+                    return Player.create_new_unknown(name=player_name, player_id=player_id)
+                case _:
+                    raise Exception(f"Wrong pantheon_type {pantheon_type}")
+
+
 class RatingModel:
     def new_rating(self) -> R:
         raise NotImplementedError()
@@ -110,19 +131,28 @@ class PlayerStats:
 
 class Game:
     def __init__(self, pantheon_type: str, event_id: int, session_id: int, session_date: datetime,
-                 player_ids: list[int], players: list[Player], places: list[int], scores: list[float]):
-        assert len(players) == 4
+                 player_ids: list[int], player_names: list[str], places: list[int], scores: list[float],
+                 player_creator: PlayerCreator):
         assert len(places) == 4
         assert len(scores) == 4
         assert len(player_ids) == 4
+        assert len(player_names) == 4
         self.pantheon_type = pantheon_type
         self.event_id = event_id
         self.session_id = session_id
         self.session_date = session_date
         self.player_ids = player_ids
-        self.players = players
+        self.player_names = player_names
         self.places = places
         self.scores = scores
+
+        self.players = []
+        for player_id, player_name in zip(self.player_ids, self.player_names, strict=True):
+            self.players.append(player_creator.get_or_create_player(
+                pantheon_type=pantheon_type,
+                player_id=player_id,
+                player_name=player_name,
+            ))
 
     def to_json(self) -> dict[str, Any]:
         return {
@@ -130,23 +160,24 @@ class Game:
             "event_id": self.event_id,
             "session_id": self.session_id,
             "session_date": self.session_date.isoformat(),
-            "players": [p.to_json() for p in self.players],
             "player_ids": self.player_ids,
+            "player_names": self.player_names,
             "places": self.places,
             "scores": self.scores,
         }
 
     @staticmethod
-    def from_json(data: dict[str, Any]) -> 'Game':
+    def from_json(data: dict[str, Any], player_creator: PlayerCreator) -> 'Game':
         return Game(
             pantheon_type=data["pantheon_type"],
             event_id=data["event_id"],
             session_id=data["session_id"],
             session_date=datetime.fromisoformat(data["session_date"]),
-            players=[Player.from_json(data=pd) for pd in data["players"]],
             player_ids=data["player_ids"],
+            player_names=data["player_names"],
             places=data["places"],
             scores=data["scores"],
+            player_creator=player_creator,
         )
 
     @staticmethod
@@ -157,10 +188,10 @@ class Game:
                 f.write("\n")
 
     @staticmethod
-    def load_list(filename: str) -> list['Game']:
+    def load_list(filename: str, player_creator: PlayerCreator) -> list['Game']:
         games = []
         with open(filename, "r") as f:
             for line in f:
                 data = ujson.loads(line.strip())
-                games.append(Game.from_json(data=data))
+                games.append(Game.from_json(data=data, player_creator=player_creator))
         return games
