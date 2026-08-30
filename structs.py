@@ -12,37 +12,38 @@ R = TypeVar("R")
 
 
 class Player:
-    def __init__(self, name: str, old_ids: list[int], new_ids: list[int]):
+    def __init__(self, slug: str | None, name: str, unknown_id: int | None, old_ids: list[int], new_ids: list[int]):
+        if slug is None:
+            assert unknown_id is not None
+            assert len(old_ids) + len(new_ids) == 1
+        else:
+            assert unknown_id is None
+            assert len(old_ids) + len(new_ids) >= 1
+
+        self.slug = slug
         self.name = name
+        self.unknown_id = unknown_id
         self.old_ids = old_ids
         self.new_ids = new_ids
         self.is_replacement_player: bool = (name in REPLACEMENT_PLAYERS)
         self.temporary_replacements: set[tuple[str, int, int]] = set()  # pantheon_type, event_id, session_id
 
-    def remember_other_ids(self, ids: list[int]):
-        if len(self.old_ids) > 0:
-            assert len(self.new_ids) == 0
-            assert len(self.old_ids) == 1
-            assert self.old_ids[0] in ids
-            self.old_ids = ids
-        elif len(self.new_ids) > 0:
-            assert len(self.old_ids) == 0
-            assert len(self.new_ids) == 1
-            assert self.new_ids[0] in ids
-            self.new_ids = ids
-        else:
-            raise Exception("Incorrect state, all ids lists are empty")
+    @staticmethod
+    def create_known(slug: str, name: str, old_ids: list[int], new_ids: list[int]) -> 'Player':
+        return Player(slug=slug, name=name, unknown_id=None, old_ids=old_ids, new_ids=new_ids)
 
     @staticmethod
-    def create_old(name: str, player_id: int) -> 'Player':
-        return Player(name=name, old_ids=[player_id], new_ids=[])
+    def create_old_unknown(name: str, player_id: int) -> 'Player':
+        return Player(slug=None, name=name, unknown_id=player_id, old_ids=[player_id], new_ids=[])
 
     @staticmethod
-    def create_new(name: str, player_id: int) -> 'Player':
-        return Player(name=name, old_ids=[], new_ids=[player_id])
+    def create_new_unknown(name: str, player_id: int) -> 'Player':
+        return Player(slug=None, name=name, unknown_id=player_id, old_ids=[], new_ids=[player_id])
 
     def to_json(self) -> dict[str, Any]:
         data: dict[str, Any] = {"name": self.name}
+        if self.slug is not None:
+            data["slug"] = self.slug
         if len(self.old_ids) > 0:
             data["old_ids"] = self.old_ids
         if len(self.new_ids) > 0:
@@ -50,47 +51,29 @@ class Player:
         return data
 
     @staticmethod
-    def get_portal_name(old_ids: list[int], new_ids: list[int],
-                        portal_names_map: dict[tuple[str, int], str]) -> Optional[str]:
-        for new_id in sorted(new_ids, reverse=True):
-            portal_name = portal_names_map.get(("new", new_id))
-            if portal_name is not None:
-                return portal_name
-        for old_id in sorted(old_ids, reverse=True):
-            portal_name = portal_names_map.get(("old", old_id))
-            if portal_name is not None:
-                return portal_name
-        return None
-
-    @staticmethod
-    def from_json(data: dict[str, Any], portal_names_map: dict[tuple[str, int], str]) -> 'Player':
+    def from_json(data: dict[str, Any]) -> 'Player':
+        slug = data.get("slug")
         old_ids = data.get("old_ids", [])
         new_ids = data.get("new_ids", [])
-        portal_name = Player.get_portal_name(old_ids=old_ids, new_ids=new_ids, portal_names_map=portal_names_map)
         player = Player(
-            name=portal_name or data["name"],
+            slug=slug,
+            name=data["name"],
+            unknown_id=None if slug is not None else (old_ids + new_ids)[0],
             old_ids=old_ids,
             new_ids=new_ids,
         )
         return player
 
-    def get_default_old_id(self) -> Optional[int]:
-        if len(self.old_ids) > 0:
-            return self.old_ids[-1]
-        return None
-
-    def get_default_new_id(self) -> Optional[int]:
-        if len(self.new_ids) > 0:
-            return self.new_ids[-1]
-        return None
-
-    def key(self) -> tuple[Optional[int], Optional[int]]:
-        return self.get_default_old_id(), self.get_default_new_id()
+    def key(self) -> tuple[Optional[str], Optional[int]]:
+        return self.slug, self.unknown_id
 
     def __hash__(self) -> int:
         return hash(self.key())
 
-    def __eq__(self, other: 'Player') -> bool:
+    def __eq__(self, other) -> bool:
+        if not isinstance(other, Player):
+            return False
+        other: Player
         return self.key() == other.key()
 
 
@@ -127,14 +110,16 @@ class PlayerStats:
 
 class Game:
     def __init__(self, pantheon_type: str, event_id: int, session_id: int, session_date: datetime,
-                 players: list[Player], places: list[int], scores: list[float]):
+                 player_ids: list[int], players: list[Player], places: list[int], scores: list[float]):
         assert len(players) == 4
         assert len(places) == 4
         assert len(scores) == 4
+        assert len(player_ids) == 4
         self.pantheon_type = pantheon_type
         self.event_id = event_id
         self.session_id = session_id
         self.session_date = session_date
+        self.player_ids = player_ids
         self.players = players
         self.places = places
         self.scores = scores
@@ -146,18 +131,20 @@ class Game:
             "session_id": self.session_id,
             "session_date": self.session_date.isoformat(),
             "players": [p.to_json() for p in self.players],
+            "player_ids": self.player_ids,
             "places": self.places,
             "scores": self.scores,
         }
 
     @staticmethod
-    def from_json(data: dict[str, Any], portal_names_map: dict[tuple[str, int], str]) -> 'Game':
+    def from_json(data: dict[str, Any]) -> 'Game':
         return Game(
             pantheon_type=data["pantheon_type"],
             event_id=data["event_id"],
             session_id=data["session_id"],
             session_date=datetime.fromisoformat(data["session_date"]),
-            players=[Player.from_json(data=pd, portal_names_map=portal_names_map) for pd in data["players"]],
+            players=[Player.from_json(data=pd) for pd in data["players"]],
+            player_ids=data["player_ids"],
             places=data["places"],
             scores=data["scores"],
         )
@@ -170,10 +157,10 @@ class Game:
                 f.write("\n")
 
     @staticmethod
-    def load_list(filename: str, portal_names_map: dict[tuple[str, int], str]) -> list['Game']:
+    def load_list(filename: str) -> list['Game']:
         games = []
         with open(filename, "r") as f:
             for line in f:
                 data = ujson.loads(line.strip())
-                games.append(Game.from_json(data=data, portal_names_map=portal_names_map))
+                games.append(Game.from_json(data=data))
         return games
