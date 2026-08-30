@@ -15,7 +15,7 @@ class Player:
     def __init__(self, slug: str | None, name: str, unknown_id: int | None, old_ids: list[int], new_ids: list[int]):
         if slug is None:
             assert unknown_id is not None
-            assert len(old_ids) + len(new_ids) == 1
+            assert old_ids + new_ids == [unknown_id]
         else:
             assert unknown_id is None
             assert len(old_ids) + len(new_ids) >= 1
