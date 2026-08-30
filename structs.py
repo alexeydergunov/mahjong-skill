@@ -81,21 +81,36 @@ class PlayerCreator:
     def __init__(self, portal_players_map: dict[tuple[str, int], Player]):
         self.portal_players_map = portal_players_map
 
+        # to output all log lines after processing
+        self.logged_accounts: set[tuple[str, int]] = set()
+        self.log_lines: list[str] = []
+
     def get_or_create_player(self, pantheon_type: str, player_id: int, player_name: str) -> Player:
         if (pantheon_type, player_id) in self.portal_players_map:
             portal_player = self.portal_players_map[(pantheon_type, player_id)]
-            print(f"Use portal player {portal_player.name} instead of {player_name} "
-                  f"for type {pantheon_type}, id {player_id}")
+            if (pantheon_type, player_id) not in self.logged_accounts:
+                self.logged_accounts.add((pantheon_type, player_id))
+                self.log_lines.append(f"Use portal player {portal_player.name} instead of {player_name} "
+                                      f"for type {pantheon_type}, id {player_id}")
             return portal_player
         else:
-            print(f"There is no portal player {player_name} for type {pantheon_type}, id {player_id}")
             match pantheon_type:
                 case "old":
-                    return Player.create_old_unknown(name=player_name, player_id=player_id)
+                    player = Player.create_old_unknown(name=player_name, player_id=player_id)
                 case "new":
-                    return Player.create_new_unknown(name=player_name, player_id=player_id)
+                    player = Player.create_new_unknown(name=player_name, player_id=player_id)
                 case _:
                     raise Exception(f"Wrong pantheon_type {pantheon_type}")
+            if (pantheon_type, player_id) not in self.logged_accounts:
+                self.logged_accounts.add((pantheon_type, player_id))
+                self.log_lines.append(f"There is no portal player {player_name} "
+                                      f"for type {pantheon_type}, id {player_id}")
+            return player
+
+    def flush_log(self):
+        print(f"PlayerCreator processed {len(self.logged_accounts)} unique players:")
+        for line in self.log_lines:
+            print(line)
 
 
 class RatingModel:

@@ -160,6 +160,7 @@ def main():
     if new_portal_event_ids is not None:
         new_games = [g for g in new_games if g.event_id in new_portal_event_ids]
         print(f"{len(new_games)} new games remaining after filtering by portal event ids")
+    player_creator.flush_log()
 
     all_games = old_games + new_games
     replace_temporary_replacement_players(games=all_games)
