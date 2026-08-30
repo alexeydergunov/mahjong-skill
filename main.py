@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 import argparse
 from collections import defaultdict
+from datetime import datetime
+# from datetime import timedelta
 from typing import Any
 from typing import Optional
 
 import requests
 import ujson
-from datetime import datetime
-# from datetime import timedelta
 
 import db_load
 from players_work import replace_temporary_replacement_players
@@ -18,11 +18,12 @@ from structs import Player
 from structs import PlayerCreator
 from structs import PlayerStats
 
+MODELS = ["elo", "trueskill", "openskill_pl", "openskill_bt"]
+
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--model", type=str, choices=["elo", "trueskill", "openskill_pl", "openskill_bt"],
-                        required=True)
+    parser.add_argument("--model", type=str, choices=MODELS, required=True)
     parser.add_argument("--load-from-portal", action="store_true", default=False, required=False)
     parser.add_argument("--event-list-file", type=str, required=False)
     parser.add_argument("--date-to", type=str, required=False)
@@ -46,7 +47,7 @@ def main():
         case "openskill_bt":
             rating_model = OpenSkillBTModel()
         case _:
-            print("Unknown rating model name. Use one of above.")
+            print(f"Unknown rating model name. Use one of: {MODELS}")
             return
 
     portal_data: Optional[list[dict[str, Any]]] = None
@@ -58,7 +59,8 @@ def main():
             portal_data = ujson.load(f)
         print(f"Loaded tournaments data from file {args.event_list_file}")
     else:
-        print("Neither of '--load-from-portal', '--event-list-file' options are specified")
+        print("Neither of '--load-from-portal', '--event-list-file' options are specified. "
+              "Use one of them for correct work")
 
     portal_players_map: dict[tuple[str, int], Player] = {}
     slug_to_ids: dict[str, list[tuple[str, int]]] = defaultdict(list)
