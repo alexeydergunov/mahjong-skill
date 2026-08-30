@@ -79,7 +79,8 @@ class Player:
 
 class PlayerCreator:
     def __init__(self, portal_players_map: dict[tuple[str, int], Player]):
-        self.portal_players_map = portal_players_map
+        self.portal_players_map: dict[tuple[str, int], Player] = portal_players_map
+        self.unknown_players_map: dict[tuple[str, int], Player] = {}
 
         # to output all log lines after processing
         self.logged_accounts: set[tuple[str, int]] = set()
@@ -93,6 +94,8 @@ class PlayerCreator:
                 self.log_lines.append(f"Use portal player {portal_player.name} instead of {player_name} "
                                       f"for type {pantheon_type}, id {player_id}")
             return portal_player
+        elif (pantheon_type, player_id) in self.unknown_players_map:
+            return self.unknown_players_map[(pantheon_type, player_id)]
         else:
             match pantheon_type:
                 case "old":
@@ -105,6 +108,7 @@ class PlayerCreator:
                 self.logged_accounts.add((pantheon_type, player_id))
                 self.log_lines.append(f"There is no portal player {player_name} "
                                       f"for type {pantheon_type}, id {player_id}")
+            self.unknown_players_map[(pantheon_type, player_id)] = player
             return player
 
     def flush_log(self):
