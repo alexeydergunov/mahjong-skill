@@ -22,6 +22,23 @@ from structs import PlayerStats
 MODELS = ["elo", "trueskill", "openskill_pl", "openskill_bt"]
 
 
+def is_suitable_tournament(online: bool, portal_event: dict[str, Any]) -> bool:
+    if online:
+        if portal_event["tournament_type"] == "online":
+            return True
+        if portal_event["tournament_type"] == "other" and portal_event["tournament_slug"].startswith("kawa-league"):
+            return True
+        if portal_event["tournament_type"] == "other" and portal_event["tournament_slug"] == "web-dragon-tournament":
+            return True
+        return False
+    else:
+        if portal_event["tournament_type"] in {"rr", "ema", "crr"}:
+            return True
+        if portal_event["tournament_type"] == "other" and portal_event["tournament_slug"] == "h8ful-eight":
+            return True
+        return False
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", type=str, choices=MODELS, required=True)
@@ -51,6 +68,17 @@ def main():
             print(f"Unknown rating model name. Use one of: {MODELS}")
             return
 
+    if args.date_to is not None:
+        date_to_str = args.date_to
+        print(f"Date to = '{date_to_str}'")
+        date_to = datetime.strptime(date_to_str, "%Y-%m-%d").date()
+    else:
+        date_to = datetime.now().date()
+        print(f"Date to = 'today'")
+
+    online: bool = args.online
+    print(f"Online: {online}")
+
     portal_data: Optional[list[dict[str, Any]]] = None
     if args.load_from_portal:
         portal_data = requests.get("https://mahjong.click/api/v0/tournaments/finished/").json()
@@ -74,10 +102,7 @@ def main():
         for portal_event in portal_data:
             pantheon_type = portal_event["pantheon_type"]
             pantheon_id = int(portal_event["tournament_pantheon_id"])
-            if pantheon_type == "old":
-                old_portal_event_ids.add(pantheon_id)
-            elif pantheon_type == "new":
-                new_portal_event_ids.add(pantheon_id)
+            # remember portal players
             for player_data in portal_event.get("players", []):
                 player_slug = player_data.get("player_slug")
                 if player_slug is not None:
@@ -87,6 +112,13 @@ def main():
                     if player_id is not None:
                         slug_to_ids[player_slug].append((pantheon_type, player_id))
                         slug_to_name[player_slug] = player_name
+            # skip not suitable tournaments, but players are already remembered
+            if not is_suitable_tournament(online=online, portal_event=portal_event):
+                continue
+            if pantheon_type == "old":
+                old_portal_event_ids.add(pantheon_id)
+            elif pantheon_type == "new":
+                new_portal_event_ids.add(pantheon_id)
         for player_slug, player_name in slug_to_name.items():
             old_ids = sorted(set(p_id for p_t, p_id in slug_to_ids[player_slug] if p_t == "old"))
             new_ids = sorted(set(p_id for p_t, p_id in slug_to_ids[player_slug] if p_t == "new"))
@@ -102,17 +134,6 @@ def main():
               f"and {len(portal_players_map)} portal players "
               f"from portal tournaments data")
     player_creator = PlayerCreator(portal_players_map=portal_players_map)
-
-    if args.date_to is not None:
-        date_to_str = args.date_to
-        print(f"Date to = '{date_to_str}'")
-        date_to = datetime.strptime(date_to_str, "%Y-%m-%d").date()
-    else:
-        date_to = datetime.now().date()
-        print(f"Date to = 'today'")
-
-    online: bool = args.online
-    print(f"Online: {online}")
 
     # Yoroshiku League, Kawa S2 Div B tie-breaks - missing on portal
     if online and (new_portal_event_ids is not None):
