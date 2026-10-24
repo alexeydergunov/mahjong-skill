@@ -73,7 +73,7 @@ def main():
         new_portal_event_ids = set()
         for portal_event in portal_data:
             pantheon_type = portal_event["pantheon_type"]
-            pantheon_id = int(portal_event["pantheon_id"])
+            pantheon_id = int(portal_event["tournament_pantheon_id"])
             if pantheon_type == "old":
                 old_portal_event_ids.add(pantheon_id)
             elif pantheon_type == "new":
