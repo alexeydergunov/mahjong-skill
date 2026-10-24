@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import argparse
 from collections import defaultdict
+from datetime import date
 from datetime import datetime
 # from datetime import timedelta
 from typing import Any
@@ -220,26 +221,39 @@ def main():
     if args.output_file is not None:
         export_to_file(
             rating_model_name=rating_model_name,
+            date_to=date_to,
+            online=online,
             all_games=all_games,
             export_results=export_results,
             filename=args.output_file,
         )
 
 
-def export_to_file(rating_model_name: str, all_games: list[Game], export_results: list[dict[str, Any]], filename: str):
+def export_to_file(rating_model_name: str,
+                   date_to: date,
+                   online: bool,
+                   all_games: list[Game],
+                   export_results: list[dict[str, Any]],
+                   filename: str):
     games_by_event: dict[tuple[str, int], int] = defaultdict(int)
     for game in all_games:
         games_by_event[(game.pantheon_type, game.event_id)] += 1
 
-    ts_rating = {
+    rating_type = rating_model_name.upper()
+    if online:
+        rating_type = "ONLINE_" + rating_type
+
+    rating_data = {
         "tournament_ids": [{"pantheon_type": et, "pantheon_id": eid, "game_count": cnt} for (et, eid), cnt in sorted(games_by_event.items())],
-        rating_model_name: export_results,
+        "ratings": export_results,
+        "date": date_to.strftime("%Y-%m-%d"),
+        "type": rating_type,
     }
 
     with open(filename, "w") as f:
         # noinspection PyTypeChecker
-        ujson.dump(ts_rating, f, ensure_ascii=False, indent=2)
-    print(f"Rating by model '{rating_model_name}' exported to file {filename}")
+        ujson.dump(rating_data, f, ensure_ascii=False, indent=2)
+    print(f"Rating for type '{rating_type}' exported to file {filename}")
 
 
 if __name__ == "__main__":
